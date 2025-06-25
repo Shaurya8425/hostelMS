@@ -9,10 +9,10 @@ A full-stack hostel management web app built using:
 
 ## 📦 Project Structure
 
-hostel-management-system/
-├── frontend/ # React + Tailwind frontend
-├── backend/ # Hono backend with Prisma and Neon
-└── [README.md](http://readme.md/)
+hostel-management-system/  
+├── frontend/ # React + Tailwind frontend  
+├── backend/ # Hono backend with Prisma and Neon  
+└── [README.md](http://readme.md/)  
 
 ## ⚙️ Prerequisites
 
@@ -21,9 +21,7 @@ hostel-management-system/
 - Vercel account (for frontend deployment)
 - Cloudflare account (for Workers deployment)
 
----
-
-## 🧩 1. Backend Setup
+## 🧩 Setup
 
 ### 📁 Go to the backend folder:
 
