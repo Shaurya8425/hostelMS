@@ -1,12 +1,15 @@
 // backend/src/db.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
+import { withAccelerate } from '@prisma/extension-accelerate';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.ACCELERATE_URL, // Use Prisma Accelerate proxy
-    },
-  },
-});
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      DATABASE_URL: string;
+    }
+  }
+}
+
+const prisma = new PrismaClient().$extends(withAccelerate());
 
 export default prisma;
