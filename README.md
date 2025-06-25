@@ -23,8 +23,9 @@ hostel-management-system/
 
 ## 🧩 Setup
 
-💾 1. Backend Setup: go to the backend folder  
+💾 1. Backend Setup:
 
+📁 go to the backend folder: cd backend  
 📦 Install dependencies: npm install  
 🗃️ Setup .env file: cp .env.example .env  
 Then fill in:
@@ -45,14 +46,11 @@ API available at: <http://localhost:3000>
 ▶️ Run React app: npm run dev  
 Frontend runs at: <http://localhost:5173>
 
-🚀 Deployment
-📄 Frontend → Vercel
-Push frontend/ to GitHub
-
-Connect Vercel to the repo
-
-Set framework = Vite
-
+🚀 Deployment  
+📄 Frontend → Vercel  
+Push frontend/ to GitHub  
+Connect Vercel to the repo  
+Set framework = Vite  
 Add VITE_BACKEND_URL in environment variables
 
 📃 Backend → Cloudflare Workers  
