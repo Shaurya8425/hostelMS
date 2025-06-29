@@ -1,12 +1,25 @@
-// src/routes/student.ts
 import { Hono } from "hono";
 import prisma from "../db";
 import { studentSchema } from "../schemas/studentSchema";
 import { hash } from "bcryptjs";
+import { authMiddleware } from "../middleware/auth";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
-const studentRoute = new Hono();
+type UserContext = {
+  Variables: {
+    user: {
+      id: number;
+      email: string;
+      role: string;
+      studentId: number | null;
+    };
+  };
+};
 
-// ✅ Create student + linked user
+const studentRoute = new Hono<UserContext>();
+
+// ✅ Admin-only: Create student + linked user (default password)
 studentRoute.post("/", async (c) => {
   const body = await c.req.json();
 
@@ -55,6 +68,54 @@ studentRoute.post("/", async (c) => {
   }
 });
 
+// ✅ Student self-complete profile (requires login, links to existing user)
+studentRoute.post(
+  "/profile",
+  authMiddleware,
+  zValidator(
+    "json",
+    z.object({
+      name: z.string(),
+      phone: z.string(),
+      branch: z.string(),
+      year: z.number(),
+      rollNumber: z.string(),
+      gender: z.enum(["MALE", "FEMALE", "OTHER"]),
+    })
+  ),
+  async (c) => {
+    const user = c.get("user");
+
+    if (user.role !== "STUDENT")
+      return c.json({ error: "Only students can create profile" }, 403);
+
+    if (user.studentId) return c.json({ error: "Profile already exists" }, 400);
+
+    const data = c.req.valid("json");
+
+    try {
+      const student = await prisma.student.create({
+        data: {
+          ...data,
+          email: user.email,
+          user: { connect: { id: user.id } },
+        },
+      });
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { studentId: student.id },
+      });
+
+      return c.json({ message: "Profile created", student });
+    } catch (err) {
+      console.error("Profile creation error:", err);
+      return c.json({ error: "Failed to create student profile" }, 500);
+    }
+  }
+);
+
+// ✅ Paginated + filtered student list
 studentRoute.get("/", async (c) => {
   const search = c.req.query("search") || "";
   const page = parseInt(c.req.query("page") || "1");
@@ -96,7 +157,7 @@ studentRoute.get("/", async (c) => {
   });
 });
 
-// ✅ Get a single student
+// ✅ Get single student
 studentRoute.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   const student = await prisma.student.findUnique({
