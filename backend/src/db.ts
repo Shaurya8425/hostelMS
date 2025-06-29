@@ -1,5 +1,5 @@
 // backend/src/db.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
 declare global {
