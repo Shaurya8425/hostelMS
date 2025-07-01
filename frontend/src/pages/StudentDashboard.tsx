@@ -40,10 +40,18 @@ export default function StudentDashboard() {
   return (
     <div className='flex flex-col max-w-3xl mx-auto p-6'>
       <h1 className='text-2xl font-bold mb-4'>Student Dashboard</h1>
-      <Link to='/complaint' className="text-blue-500">Complaint</Link>
-      <Link to='/leave' className="text-blue-500">Leave</Link>
-      <Link to='/fee' className="text-blue-500">Fees</Link>
-
+      <Link to='/complaint' className='text-blue-500'>
+        Complaint
+      </Link>
+      <Link to='/leave' className='text-blue-500'>
+        Leave
+      </Link>
+      <Link to='/fee' className='text-blue-500'>
+        Fees
+      </Link>
+      <Link to='/rooms' className='text-blue-500'>
+        Rooms
+      </Link>
     </div>
   );
 }

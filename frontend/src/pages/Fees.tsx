@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 
 type FeePayment = {
@@ -14,22 +13,43 @@ type FeePayment = {
 
 export default function Fees() {
   const [fees, setFees] = useState<FeePayment[]>([]);
+  const [studentId, setStudentId] = useState<number | null>(null);
   const token = localStorage.getItem("token") || "";
-  const studentId = token ? (jwtDecode(token) as any)?.studentId : null;
 
-  const fetchFees = async () => {
+  // Fetch studentId from /auth/me for reliability
+  useEffect(() => {
+    const fetchStudentId = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const id = res.data?.user?.studentId;
+        setStudentId(id ?? null);
+      } catch {
+        setStudentId(null);
+        toast.error("Failed to fetch user info");
+      }
+    };
+    if (token) fetchStudentId();
+  }, [token]);
+
+  const fetchFees = async (id: number) => {
     try {
-      const res = await axios.get(`payments/student/${studentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setFees(res.data.data);
+      const res = await axios.get(
+        `http://localhost:3000/payments/student/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setFees(Array.isArray(res.data.data) ? res.data.data : []);
     } catch (err) {
+      setFees([]); // fallback to empty array on error
       toast.error("Failed to fetch fee payments");
     }
   };
 
   useEffect(() => {
-    if (studentId) fetchFees();
+    if (studentId) fetchFees(studentId);
   }, [studentId]);
 
   return (

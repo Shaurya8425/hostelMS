@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -16,19 +10,13 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
-  name      String
   email     String   @unique
   password  String
   role      Role
-  student   Student? @relation(fields: [studentId], references: [id])
   studentId Int?     @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-enum Role {
-  ADMIN
-  STUDENT
+  student   Student? @relation(fields: [studentId], references: [id])
 }
 
 model Student {
@@ -40,14 +28,61 @@ model Student {
   year       Int
   rollNumber String       @unique
   gender     Gender
-  room       Room?        @relation(fields: [roomId], references: [id])
   roomId     Int?
-  user       User?
-  leaves     Leave[]
-  complaints Complaint[]
-  payments   FeePayment[]
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
+  complaints Complaint[]
+  payments   FeePayment[]
+  leaves     Leave[]
+  room       Room?        @relation(fields: [roomId], references: [id])
+  user       User?
+}
+
+model Room {
+  id         Int       @id @default(autoincrement())
+  roomNumber String    @unique
+  block      String
+  capacity   Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  students   Student[]
+}
+
+model Leave {
+  id        Int         @id @default(autoincrement())
+  studentId Int
+  fromDate  DateTime
+  toDate    DateTime
+  reason    String
+  status    LeaveStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  student   Student     @relation(fields: [studentId], references: [id])
+}
+
+model Complaint {
+  id          Int             @id @default(autoincrement())
+  studentId   Int
+  subject     String
+  description String
+  status      ComplaintStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  student     Student         @relation(fields: [studentId], references: [id])
+}
+
+model FeePayment {
+  id        Int           @id @default(autoincrement())
+  studentId Int
+  amount    Int
+  status    PaymentStatus @default(PENDING)
+  paidAt    DateTime?
+  dueDate   DateTime
+  createdAt DateTime      @default(now())
+  student   Student       @relation(fields: [studentId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  STUDENT
 }
 
 enum Gender {
@@ -56,58 +91,17 @@ enum Gender {
   OTHER
 }
 
-model Room {
-  id         Int       @id @default(autoincrement())
-  roomNumber String    @unique
-  block      String
-  capacity   Int
-  students   Student[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
-
-model Leave {
-  id        Int         @id @default(autoincrement())
-  student   Student     @relation(fields: [studentId], references: [id])
-  studentId Int
-  fromDate  DateTime
-  toDate    DateTime
-  reason    String
-  status    LeaveStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-}
-
 enum LeaveStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
-model Complaint {
-  id          Int             @id @default(autoincrement())
-  student     Student         @relation(fields: [studentId], references: [id])
-  studentId   Int
-  subject     String
-  description String
-  status      ComplaintStatus @default(PENDING)
-  createdAt   DateTime        @default(now())
-}
-
 enum ComplaintStatus {
   PENDING
   IN_PROGRESS
   RESOLVED
-}
-
-model FeePayment {
-  id        Int           @id @default(autoincrement())
-  student   Student       @relation(fields: [studentId], references: [id])
-  studentId Int
-  amount    Int
-  status    PaymentStatus @default(PENDING)
-  paidAt    DateTime?
-  dueDate   DateTime
-  createdAt DateTime      @default(now())
+  REJECTED
 }
 
 enum PaymentStatus {

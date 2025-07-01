@@ -7,5 +7,5 @@ export const createComplaintSchema = z.object({
 });
 
 export const updateComplaintStatusSchema = z.object({
-  status: z.enum(["PENDING", "IN_PROGRESS", "RESOLVED"]),
+  status: z.enum(["PENDING", "IN_PROGRESS", "RESOLVED", "REJECTED"]),
 });
