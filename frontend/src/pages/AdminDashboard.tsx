@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import RoomDiagram from "../components/RoomDiagram";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>({});
@@ -50,7 +51,8 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
-      <div className="flex flex-col gap-1">
+      <RoomDiagram />
+      <div className='flex flex-col gap-1'>
         <Link to='/admin/students' className='text-blue-500'>
           Students
         </Link>

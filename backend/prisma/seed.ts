@@ -51,18 +51,109 @@ async function main() {
     )
   );
 
-  // Create 5 rooms
-  const rooms = await Promise.all(
-    Array.from({ length: 5 }).map((_, i) =>
-      prisma.room.create({
-        data: {
-          roomNumber: `${100 + i}`,
-          block: String.fromCharCode(65 + (i % 3)),
-          capacity: 3,
-        },
-      })
-    )
-  );
+  // Create 10 rooms with floor, designation, block, status
+  const rooms = await Promise.all([
+    prisma.room.create({
+      data: {
+        roomNumber: "1",
+        block: "A-Wing",
+        floor: 0,
+        designation: null,
+        capacity: 3,
+        status: "AVAILABLE",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "2",
+        block: "A-Wing",
+        floor: 0,
+        designation: "store",
+        capacity: 0,
+        status: "BLOCKED",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "5",
+        block: "A-Wing",
+        floor: 0,
+        designation: "APO",
+        capacity: 1,
+        status: "BLOCKED",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "10",
+        block: "A-Wing",
+        floor: 0,
+        designation: "SETHI",
+        capacity: 1,
+        status: "BLOCKED",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "20",
+        block: "A-Wing",
+        floor: 0,
+        designation: "Nasir",
+        capacity: 1,
+        status: "BLOCKED",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "14",
+        block: "A-Wing",
+        floor: 0,
+        designation: null,
+        capacity: 3,
+        status: "AVAILABLE",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "21",
+        block: "A-Wing",
+        floor: 0,
+        designation: null,
+        capacity: 3,
+        status: "AVAILABLE",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "22",
+        block: "A-Wing",
+        floor: 1,
+        designation: null,
+        capacity: 3,
+        status: "AVAILABLE",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "43",
+        block: "A-Wing",
+        floor: 1,
+        designation: "store",
+        capacity: 0,
+        status: "BLOCKED",
+      },
+    }),
+    prisma.room.create({
+      data: {
+        roomNumber: "33",
+        block: "A-Wing",
+        floor: 1,
+        designation: null,
+        capacity: 3,
+        status: "AVAILABLE",
+      },
+    }),
+  ]);
 
   // Assign students to rooms (1 per room, rest unassigned)
   for (let i = 0; i < students.length; i++) {

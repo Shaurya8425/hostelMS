@@ -1,0 +1,12 @@
+name = "hms"
+main = "src/index.ts"
+compatibility_date = "2025-07-03"
+
+[vars]
+DATABASE_URL="postgresql://bigData_owner:npg_FjeN7EaKCQ8g@ep-aged-waterfall-a8lk0jv7-pooler.eastus2.azure.neon.tech/bigData?sslmode=require"
+
+ACCELERATE_URL="prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiMDFKWUpRSkI4NEtUS0czMFYzN0ZRUUQ2WFIiLCJ0ZW5hbnRfaWQiOiJmOTFlNjE4MTk5YmI4MzEyNDA2ZjJmZWM5ZjE1Y2E4N2Q1MTU2YjUyNGE0MDc1MzZkMDYxYWQ3YjhjNGUxOWQ2IiwiaW50ZXJuYWxfc2VjcmV0IjoiNTQ1NWYwNTYtNjM1Mi00OGYxLWIzOGQtMGFkZmIwMDdiZDAxIn0.sIgirIdaDdymF7G209b4ZIjMnMZToaqXLpX42v1sCG0"
+
+JWET_SECRET="hostelMS"
+
+compatibility_flags = ["nodejs_compat"]

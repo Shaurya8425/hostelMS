@@ -158,7 +158,7 @@ export default function AdminStudents() {
       toast.success("Student deleted");
       setShowDeleteModal(false);
       setDeleteId(null);
-      fetchStudents();
+      fetchStudents(); // Refresh the list
     } catch (err) {
       toast.error("Failed to delete");
       setShowDeleteModal(false);

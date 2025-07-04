@@ -6,7 +6,10 @@ interface Room {
   id: number;
   roomNumber: string;
   block: string;
+  floor: number;
+  designation?: string | null;
   capacity: number;
+  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "BLOCKED";
   students: {
     id: number;
     name: string;
@@ -16,7 +19,14 @@ interface Room {
 
 export default function AdminRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [form, setForm] = useState({ roomNumber: "", block: "", capacity: 1 });
+  const [form, setForm] = useState({
+    roomNumber: "",
+    block: "",
+    floor: 0,
+    designation: "",
+    capacity: 1,
+    status: "AVAILABLE",
+  });
   const [assignForm, setAssignForm] = useState({ studentId: "", roomId: "" });
   const [students, setStudents] = useState<
     {
@@ -64,12 +74,24 @@ export default function AdminRooms() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = { ...form, capacity: Number(form.capacity) };
+      const payload = {
+        ...form,
+        capacity: Number(form.capacity),
+        floor: Number(form.floor),
+        designation: form.designation || null,
+      };
       await axios.post("http://localhost:3000/rooms", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Room created");
-      setForm({ roomNumber: "", block: "", capacity: 1 });
+      setForm({
+        roomNumber: "",
+        block: "",
+        floor: 0,
+        designation: "",
+        capacity: 1,
+        status: "AVAILABLE",
+      });
       fetchRooms();
     } catch (err) {
       toast.error("Failed to create room");
@@ -129,6 +151,23 @@ export default function AdminRooms() {
         />
         <input
           type='number'
+          name='floor'
+          placeholder='Floor (0=Ground, 1=First)'
+          value={form.floor}
+          onChange={(e) => setForm({ ...form, floor: Number(e.target.value) })}
+          className='w-full p-2 border rounded'
+          required
+        />
+        <input
+          type='text'
+          name='designation'
+          placeholder='Designation (optional)'
+          value={form.designation}
+          onChange={(e) => setForm({ ...form, designation: e.target.value })}
+          className='w-full p-2 border rounded'
+        />
+        <input
+          type='number'
           name='capacity'
           placeholder='Capacity'
           value={form.capacity}
@@ -138,6 +177,19 @@ export default function AdminRooms() {
           className='w-full p-2 border rounded'
           required
         />
+        <select
+          name='status'
+          value={form.status}
+          onChange={(e) =>
+            setForm({ ...form, status: e.target.value as Room["status"] })
+          }
+          className='w-full p-2 border rounded'
+        >
+          <option value='AVAILABLE'>Available</option>
+          <option value='OCCUPIED'>Occupied</option>
+          <option value='RESERVED'>Reserved</option>
+          <option value='BLOCKED'>Blocked</option>
+        </select>
         <button
           type='submit'
           className='bg-green-600 text-white px-4 py-2 rounded'
@@ -200,7 +252,10 @@ export default function AdminRooms() {
             <tr>
               <th className='p-2 border'>Room Number</th>
               <th className='p-2 border'>Block</th>
+              <th className='p-2 border'>Floor</th>
+              <th className='p-2 border'>Designation</th>
               <th className='p-2 border'>Capacity</th>
+              <th className='p-2 border'>Status</th>
               <th className='p-2 border'>Occupied</th>
               <th className='p-2 border'>Students</th>
             </tr>
@@ -210,7 +265,10 @@ export default function AdminRooms() {
               <tr key={room.id}>
                 <td className='p-2 border'>{room.roomNumber}</td>
                 <td className='p-2 border'>{room.block}</td>
+                <td className='p-2 border'>{room.floor}</td>
+                <td className='p-2 border'>{room.designation || "-"}</td>
                 <td className='p-2 border'>{room.capacity}</td>
+                <td className='p-2 border'>{room.status}</td>
                 <td className='p-2 border'>{room.students.length}</td>
                 <td className='p-2 border'>
                   {room.students.length > 0 ? (
@@ -229,7 +287,7 @@ export default function AdminRooms() {
             ))}
             {rooms.length === 0 && (
               <tr>
-                <td className='p-4 text-center' colSpan={5}>
+                <td className='p-4 text-center' colSpan={8}>
                   No rooms found
                 </td>
               </tr>
