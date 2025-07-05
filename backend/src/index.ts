@@ -18,9 +18,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://hostel-ms-psi.vercel.app",
-      "https://hostelms-3z7d.onrender.com",
-    ], // allow local, vercel, and render frontend
+      "https://hostel-ms-psi.vercel.app"
+    ], // allow local, and vercel frontend
     credentials: true,
   })
 );

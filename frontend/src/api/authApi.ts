@@ -1,7 +1,7 @@
 // src/api/authApi.ts
 import axios from "axios";
 
-const API_BASE = "https://hostelms-3z7d.onrender.com/";
+const API_BASE = "https://hostelms-3z7d.onrender.com"; // or your backend URL
 
 export const signup = async (data: {
   name: string;
