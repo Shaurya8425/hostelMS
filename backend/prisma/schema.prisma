@@ -20,22 +20,27 @@ model User {
 }
 
 model Student {
-  id         Int          @id @default(autoincrement())
-  name       String
-  email      String       @unique
-  phone      String
-  branch     String
-  year       Int
-  rollNumber String       @unique
-  gender     Gender
-  roomId     Int?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  complaints Complaint[]
-  payments   FeePayment[]
-  leaves     Leave[]
-  room       Room?        @relation(fields: [roomId], references: [id])
-  user       User?
+  id          Int          @id @default(autoincrement())
+  name        String
+  email       String       @unique
+  phone       String
+  branch      String
+  year        Int
+  rollNumber  String       @unique
+  gender      Gender
+  division    String? // Now optional
+  course      String? // Now optional
+  fromDate    DateTime? // Now optional
+  toDate      DateTime? // Now optional
+  linenIssued LinenStatus? // Now optional
+  roomId      Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  complaints  Complaint[]
+  payments    FeePayment[]
+  leaves      Leave[]
+  room        Room?        @relation(fields: [roomId], references: [id])
+  user        User?
 }
 
 model Room {
@@ -118,4 +123,9 @@ enum RoomStatus {
   OCCUPIED
   RESERVED
   BLOCKED // for bathrooms/stores/offices
+}
+
+enum LinenStatus {
+  Y
+  NA
 }

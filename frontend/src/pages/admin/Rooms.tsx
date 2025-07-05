@@ -122,165 +122,195 @@ export default function AdminRooms() {
   };
 
   return (
-    <div className='p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Room Management</h1>
+    <div className='p-2 sm:p-6'>
+      <h1 className='text-2xl sm:text-3xl font-extrabold mb-6 text-blue-700'>
+        Room Management
+      </h1>
 
-      {/* Create Room */}
-      <form
-        onSubmit={handleCreate}
-        className='space-y-2 bg-gray-50 p-4 rounded border mb-6 max-w-md'
-      >
-        <h2 className='font-semibold text-lg'>Create Room</h2>
-        <input
-          type='text'
-          name='roomNumber'
-          placeholder='Room Number'
-          value={form.roomNumber}
-          onChange={(e) => setForm({ ...form, roomNumber: e.target.value })}
-          className='w-full p-2 border rounded'
-          required
-        />
-        <input
-          type='text'
-          name='block'
-          placeholder='Block'
-          value={form.block}
-          onChange={(e) => setForm({ ...form, block: e.target.value })}
-          className='w-full p-2 border rounded'
-          required
-        />
-        <input
-          type='number'
-          name='floor'
-          placeholder='Floor (0=Ground, 1=First)'
-          value={form.floor}
-          onChange={(e) => setForm({ ...form, floor: Number(e.target.value) })}
-          className='w-full p-2 border rounded'
-          required
-        />
-        <input
-          type='text'
-          name='designation'
-          placeholder='Designation (optional)'
-          value={form.designation}
-          onChange={(e) => setForm({ ...form, designation: e.target.value })}
-          className='w-full p-2 border rounded'
-        />
-        <input
-          type='number'
-          name='capacity'
-          placeholder='Capacity'
-          value={form.capacity}
-          onChange={(e) =>
-            setForm({ ...form, capacity: Number(e.target.value) })
-          }
-          className='w-full p-2 border rounded'
-          required
-        />
-        <select
-          name='status'
-          value={form.status}
-          onChange={(e) =>
-            setForm({ ...form, status: e.target.value as Room["status"] })
-          }
-          className='w-full p-2 border rounded'
+      <div className='flex flex-col lg:flex-row gap-4 justify-center items-stretch'>
+        {/* Create Room */}
+        <form
+          onSubmit={handleCreate}
+          className='space-y-2 bg-white p-4 sm:p-6 rounded-xl border shadow mb-4 max-w-md w-full'
         >
-          <option value='AVAILABLE'>Available</option>
-          <option value='OCCUPIED'>Occupied</option>
-          <option value='RESERVED'>Reserved</option>
-          <option value='BLOCKED'>Blocked</option>
-        </select>
-        <button
-          type='submit'
-          className='bg-green-600 text-white px-4 py-2 rounded'
-        >
-          Create Room
-        </button>
-      </form>
+          <h2 className='font-semibold text-lg mb-2 text-blue-700'>
+            Create Room
+          </h2>
+          <input
+            type='text'
+            name='roomNumber'
+            placeholder='Room Number'
+            value={form.roomNumber}
+            onChange={(e) => setForm({ ...form, roomNumber: e.target.value })}
+            className='w-full p-2 border rounded'
+            required
+          />
+          <input
+            type='text'
+            name='block'
+            placeholder='Block'
+            value={form.block}
+            onChange={(e) => setForm({ ...form, block: e.target.value })}
+            className='w-full p-2 border rounded'
+            required
+          />
+          <input
+            type='number'
+            name='floor'
+            placeholder='Floor (0=Ground, 1=First)'
+            value={form.floor}
+            onChange={(e) =>
+              setForm({ ...form, floor: Number(e.target.value) })
+            }
+            className='w-full p-2 border rounded'
+            required
+          />
+          <input
+            type='text'
+            name='designation'
+            placeholder='Designation (optional)'
+            value={form.designation}
+            onChange={(e) => setForm({ ...form, designation: e.target.value })}
+            className='w-full p-2 border rounded'
+          />
+          <input
+            type='number'
+            name='capacity'
+            placeholder='Capacity'
+            value={form.capacity}
+            onChange={(e) =>
+              setForm({ ...form, capacity: Number(e.target.value) })
+            }
+            className='w-full p-2 border rounded'
+            required
+          />
+          <select
+            name='status'
+            value={form.status}
+            onChange={(e) =>
+              setForm({ ...form, status: e.target.value as Room["status"] })
+            }
+            className='w-full p-2 border rounded'
+          >
+            <option value='AVAILABLE'>Available</option>
+            <option value='OCCUPIED'>Occupied</option>
+            <option value='RESERVED'>Reserved</option>
+            <option value='BLOCKED'>Blocked</option>
+          </select>
+          <button
+            type='submit'
+            className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-2 rounded shadow hover:from-green-600 hover:to-green-800 transition'
+          >
+            Create Room
+          </button>
+        </form>
 
-      {/* Assign Student to Room */}
-      <form
-        onSubmit={handleAssign}
-        className='space-y-2 bg-gray-50 p-4 rounded border mb-6 max-w-md'
-      >
-        <h2 className='font-semibold text-lg'>Assign Student to Room</h2>
-        <select
-          name='studentId'
-          value={assignForm.studentId}
-          onChange={(e) =>
-            setAssignForm({ ...assignForm, studentId: e.target.value })
-          }
-          className='w-full p-2 border rounded'
-          required
+        {/* Assign Student to Room */}
+        <form
+          onSubmit={handleAssign}
+          className='space-y-2 bg-white p-4 sm:p-6 rounded-xl border shadow mb-4 max-w-md w-full'
         >
-          <option value=''>Select Student</option>
-          {Array.isArray(students) &&
-            students.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.rollNumber})
+          <h2 className='font-semibold text-lg mb-2 text-blue-700'>
+            Assign Student to Room
+          </h2>
+          <select
+            name='studentId'
+            value={assignForm.studentId}
+            onChange={(e) =>
+              setAssignForm({ ...assignForm, studentId: e.target.value })
+            }
+            className='w-full p-2 border rounded'
+            required
+          >
+            <option value=''>Select Student</option>
+            {Array.isArray(students) &&
+              students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.rollNumber})
+                </option>
+              ))}
+          </select>
+          <select
+            name='roomId'
+            value={assignForm.roomId}
+            onChange={(e) =>
+              setAssignForm({ ...assignForm, roomId: e.target.value })
+            }
+            className='w-full p-2 border rounded'
+            required
+          >
+            <option value=''>Select Room</option>
+            {rooms.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.roomNumber} ({r.block})
               </option>
             ))}
-        </select>
-        <select
-          name='roomId'
-          value={assignForm.roomId}
-          onChange={(e) =>
-            setAssignForm({ ...assignForm, roomId: e.target.value })
-          }
-          className='w-full p-2 border rounded'
-          required
-        >
-          <option value=''>Select Room</option>
-          {rooms.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.roomNumber} ({r.block})
-            </option>
-          ))}
-        </select>
-        <button
-          type='submit'
-          className='bg-blue-600 text-white px-4 py-2 rounded'
-        >
-          Assign
-        </button>
-      </form>
+          </select>
+          <button
+            type='submit'
+            className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition'
+          >
+            Assign
+          </button>
+        </form>
+      </div>
 
       {/* Room List */}
-      <div className='overflow-x-auto'>
-        <table className='w-full text-left border'>
-          <thead className='bg-gray-100'>
+      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4 mt-4'>
+        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm'>
+          <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border'>Room Number</th>
-              <th className='p-2 border'>Block</th>
-              <th className='p-2 border'>Floor</th>
-              <th className='p-2 border'>Designation</th>
-              <th className='p-2 border'>Capacity</th>
-              <th className='p-2 border'>Status</th>
-              <th className='p-2 border'>Occupied</th>
-              <th className='p-2 border'>Students</th>
+              <th className='p-2 border-b'>Room Number</th>
+              <th className='p-2 border-b'>Block</th>
+              <th className='p-2 border-b'>Floor</th>
+              <th className='p-2 border-b'>Designation</th>
+              <th className='p-2 border-b'>Capacity</th>
+              <th className='p-2 border-b'>Status</th>
+              <th className='p-2 border-b'>Occupied</th>
+              <th className='p-2 border-b'>Students</th>
             </tr>
           </thead>
           <tbody>
             {rooms.map((room) => (
-              <tr key={room.id}>
-                <td className='p-2 border'>{room.roomNumber}</td>
-                <td className='p-2 border'>{room.block}</td>
-                <td className='p-2 border'>{room.floor}</td>
-                <td className='p-2 border'>{room.designation || "-"}</td>
-                <td className='p-2 border'>{room.capacity}</td>
-                <td className='p-2 border'>{room.status}</td>
-                <td className='p-2 border'>{room.students.length}</td>
-                <td className='p-2 border'>
+              <tr
+                key={room.id}
+                className='hover:bg-blue-50 rounded-lg transition'
+              >
+                <td className='p-2'>{room.roomNumber}</td>
+                <td className='p-2'>{room.block}</td>
+                <td className='p-2'>{room.floor}</td>
+                <td className='p-2'>{room.designation || "-"}</td>
+                <td className='p-2'>{room.capacity}</td>
+                <td className='p-2'>
+                  <span
+                    className={
+                      room.status === "AVAILABLE"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : room.status === "OCCUPIED"
+                        ? "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : room.status === "RESERVED"
+                        ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
+                  >
+                    {room.status}
+                  </span>
+                </td>
+                <td className='p-2'>{room.students.length}</td>
+                <td className='p-2'>
                   {room.students.length > 0 ? (
-                    <ul className='list-disc list-inside'>
+                    <div className='flex flex-wrap gap-2'>
                       {room.students.map((s) => (
-                        <li key={s.id}>
+                        <span
+                          key={s.id}
+                          className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'
+                        >
                           {s.name} ({s.rollNumber})
-                        </li>
+                        </span>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
-                    "Vacant"
+                    <span className='text-gray-400 italic'>Vacant</span>
                   )}
                 </td>
               </tr>

@@ -11,6 +11,11 @@ interface Student {
   year: number;
   rollNumber: string;
   gender: string;
+  division?: string;
+  course?: string;
+  fromDate?: string;
+  toDate?: string;
+  linenIssued?: "Y" | "NA";
 }
 
 export default function AdminStudents() {
@@ -27,6 +32,11 @@ export default function AdminStudents() {
     year: 1,
     rollNumber: "",
     gender: "MALE",
+    division: "",
+    course: "",
+    fromDate: "",
+    toDate: "",
+    linenIssued: "Y",
   });
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
@@ -37,6 +47,11 @@ export default function AdminStudents() {
     year: 1,
     rollNumber: "",
     gender: "MALE",
+    division: "",
+    course: "",
+    fromDate: "",
+    toDate: "",
+    linenIssued: "Y",
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -94,6 +109,11 @@ export default function AdminStudents() {
         year: 1,
         rollNumber: "",
         gender: "MALE",
+        division: "",
+        course: "",
+        fromDate: "",
+        toDate: "",
+        linenIssued: "Y",
       });
     } catch (err) {
       toast.error("Failed to add student");
@@ -117,6 +137,11 @@ export default function AdminStudents() {
       year: student.year,
       rollNumber: student.rollNumber,
       gender: student.gender,
+      division: student.division || "",
+      course: student.course || "",
+      fromDate: student.fromDate || "",
+      toDate: student.toDate || "",
+      linenIssued: student.linenIssued || "Y",
     });
   };
 
@@ -172,12 +197,14 @@ export default function AdminStudents() {
   };
 
   return (
-    <div className='p-6'>
-      <div className='flex justify-between items-center mb-4'>
-        <h1 className='text-2xl font-bold'>Student Management</h1>
+    <div className='p-2 sm:p-4'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
+        <h1 className='text-2xl sm:text-3xl font-extrabold text-blue-900'>
+          Student Management
+        </h1>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className='bg-blue-600 text-white px-4 py-2 rounded'
+          className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition w-full sm:w-auto'
         >
           {showAddForm ? "Cancel" : "+ Add Student"}
         </button>
@@ -186,7 +213,7 @@ export default function AdminStudents() {
       {showAddForm && (
         <form
           onSubmit={handleAdd}
-          className='space-y-2 bg-gray-50 p-4 rounded border mb-4'
+          className='space-y-2 bg-white p-4 sm:p-6 rounded-xl border shadow mb-6 max-w-md w-full'
         >
           <input
             type='text'
@@ -252,9 +279,50 @@ export default function AdminStudents() {
             <option value='FEMALE'>Female</option>
             <option value='OTHER'>Other</option>
           </select>
+          <input
+            type='text'
+            name='division'
+            placeholder='Division'
+            value={form.division}
+            onChange={handleChange}
+            className='w-full p-2 border rounded'
+          />
+          <input
+            type='text'
+            name='course'
+            placeholder='Course'
+            value={form.course}
+            onChange={handleChange}
+            className='w-full p-2 border rounded'
+          />
+          <input
+            type='date'
+            name='fromDate'
+            placeholder='From Date'
+            value={form.fromDate}
+            onChange={handleChange}
+            className='w-full p-2 border rounded'
+          />
+          <input
+            type='date'
+            name='toDate'
+            placeholder='To Date'
+            value={form.toDate}
+            onChange={handleChange}
+            className='w-full p-2 border rounded'
+          />
+          <select
+            name='linenIssued'
+            value={form.linenIssued}
+            onChange={handleChange}
+            className='w-full p-2 border rounded'
+          >
+            <option value='Y'>Y</option>
+            <option value='NA'>N/A</option>
+          </select>
           <button
             type='submit'
-            className='bg-green-600 text-white px-4 py-2 rounded'
+            className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-2 rounded shadow hover:from-green-600 hover:to-green-800 transition'
           >
             Add Student
           </button>
@@ -264,26 +332,31 @@ export default function AdminStudents() {
       <input
         type='text'
         placeholder='Search by name or roll number'
-        className='border px-4 py-2 rounded w-full md:w-1/3 mb-4'
+        className='border px-4 py-2 rounded w-full sm:w-1/2 md:w-1/3 mb-6 shadow-sm'
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <div className='overflow-x-auto'>
-        <table className='w-full text-left border'>
-          <thead className='bg-gray-100'>
+      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
+        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm'>
+          <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border'>Name</th>
-              <th className='p-2 border'>Email</th>
-              <th className='p-2 border'>Roll No</th>
-              <th className='p-2 border'>Year</th>
-              <th className='p-2 border'>Branch</th>
-              <th className='p-2 border'>Actions</th>
+              <th className='p-2 border-b'>Name</th>
+              <th className='p-2 border-b'>Email</th>
+              <th className='p-2 border-b'>Roll No</th>
+              <th className='p-2 border-b'>Year</th>
+              <th className='p-2 border-b'>Branch</th>
+              <th className='p-2 border-b'>Division</th>
+              <th className='p-2 border-b'>Course</th>
+              <th className='p-2 border-b'>From</th>
+              <th className='p-2 border-b'>To</th>
+              <th className='p-2 border-b'>Linen Issued</th>
+              <th className='p-2 border-b'>Actions</th>
             </tr>
           </thead>
           <tbody>
             {students.map((s) => (
-              <tr key={s.id}>
+              <tr key={s.id} className='hover:bg-blue-50 rounded-lg transition'>
                 {editId === s.id ? (
                   <>
                     <td className='p-2 border'>
@@ -331,6 +404,53 @@ export default function AdminStudents() {
                         className='p-1 border rounded w-full'
                       />
                     </td>
+                    <td className='p-2 border'>
+                      <input
+                        type='text'
+                        name='division'
+                        value={editForm.division}
+                        onChange={handleEditFormChange}
+                        className='p-1 border rounded w-full'
+                      />
+                    </td>
+                    <td className='p-2 border'>
+                      <input
+                        type='text'
+                        name='course'
+                        value={editForm.course}
+                        onChange={handleEditFormChange}
+                        className='p-1 border rounded w-full'
+                      />
+                    </td>
+                    <td className='p-2 border'>
+                      <input
+                        type='date'
+                        name='fromDate'
+                        value={editForm.fromDate}
+                        onChange={handleEditFormChange}
+                        className='p-1 border rounded w-full'
+                      />
+                    </td>
+                    <td className='p-2 border'>
+                      <input
+                        type='date'
+                        name='toDate'
+                        value={editForm.toDate}
+                        onChange={handleEditFormChange}
+                        className='p-1 border rounded w-full'
+                      />
+                    </td>
+                    <td className='p-2 border'>
+                      <select
+                        name='linenIssued'
+                        value={editForm.linenIssued}
+                        onChange={handleEditFormChange}
+                        className='p-1 border rounded w-full'
+                      >
+                        <option value='Y'>Y</option>
+                        <option value='NA'>N/A</option>
+                      </select>
+                    </td>
                     <td className='p-2 border space-x-2'>
                       <button
                         className='text-green-600 mr-2'
@@ -350,21 +470,36 @@ export default function AdminStudents() {
                   </>
                 ) : (
                   <>
-                    <td className='p-2 border'>{s.name}</td>
-                    <td className='p-2 border'>{s.email}</td>
-                    <td className='p-2 border'>{s.rollNumber}</td>
-                    <td className='p-2 border'>{s.year}</td>
-                    <td className='p-2 border'>{s.branch}</td>
-                    <td className='p-2 border space-x-2'>
+                    <td className='p-2'>{s.name}</td>
+                    <td className='p-2'>{s.email}</td>
+                    <td className='p-2'>
+                      <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                        {s.rollNumber}
+                      </span>
+                    </td>
+                    <td className='p-2'>{s.year}</td>
+                    <td className='p-2'>{s.branch}</td>
+                    <td className='p-2'>{s.division}</td>
+                    <td className='p-2'>{s.course}</td>
+                    <td className='p-2'>
+                      {s.fromDate
+                        ? new Date(s.fromDate).toLocaleDateString()
+                        : ""}
+                    </td>
+                    <td className='p-2'>
+                      {s.toDate ? new Date(s.toDate).toLocaleDateString() : ""}
+                    </td>
+                    <td className='p-2'>{s.linenIssued}</td>
+                    <td className='p-2 space-x-2'>
                       <button
-                        className='text-blue-600 mr-2'
+                        className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold mr-2'
                         onClick={() => handleEditClick(s)}
                         type='button'
                       >
                         Edit
                       </button>
                       <button
-                        className='text-red-600'
+                        className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
                         onClick={() => handleDeleteClick(s.id)}
                         type='button'
                       >
@@ -389,7 +524,7 @@ export default function AdminStudents() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50'>
-          <div className='bg-white p-6 rounded shadow-lg w-80'>
+          <div className='bg-white p-6 rounded-xl shadow-lg w-80'>
             <h2 className='text-lg font-semibold mb-4'>Confirm Delete</h2>
             <p className='mb-6'>
               Are you sure you want to delete this student?
@@ -412,21 +547,21 @@ export default function AdminStudents() {
         </div>
       )}
 
-      <div className='flex justify-between mt-4'>
+      <div className='flex flex-col sm:flex-row justify-between items-center mt-6 gap-4'>
         <button
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
-          className='px-4 py-2 border rounded disabled:opacity-50'
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
         >
           Previous
         </button>
-        <p>
+        <p className='font-semibold'>
           Page {page} of {totalPages}
         </p>
         <button
           disabled={page === totalPages}
           onClick={() => setPage((p) => p + 1)}
-          className='px-4 py-2 border rounded disabled:opacity-50'
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
         >
           Next
         </button>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import RoomDiagram from "../components/RoomDiagram";
+import Spinner from "../components/Spinner";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>({});
@@ -31,43 +32,55 @@ export default function AdminDashboard() {
 
   return (
     <div className='p-6 max-w-6xl mx-auto'>
-      <h1 className='text-3xl font-bold mb-4'>Admin Dashboard</h1>
-      <div className='grid grid-cols-2 md:grid-cols-3 gap-6'>
+      <h1 className='text-4xl font-extrabold mb-8 text-blue-900'>
+        Admin Dashboard
+      </h1>
+      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-10'>
         {[
-          { title: "Total Students", count: stats.students },
-          { title: "Rooms", count: stats.rooms },
-          { title: "Leaves", count: stats.leaves },
-          { title: "Complaints", count: stats.complaints },
-          { title: "Payments", count: stats.payments },
+          {
+            title: "Total Students",
+            count: stats.students,
+            color: "from-blue-500 to-blue-700",
+          },
+          {
+            title: "Rooms",
+            count: stats.rooms,
+            color: "from-green-500 to-green-700",
+          },
+          {
+            title: "Leaves",
+            count: stats.leaves,
+            color: "from-yellow-400 to-yellow-600",
+          },
+          {
+            title: "Complaints",
+            count: stats.complaints,
+            color: "from-red-500 to-red-700",
+          },
+          {
+            title: "Payments",
+            count: stats.payments,
+            color: "from-purple-500 to-purple-700",
+          },
         ].map((card) => (
           <div
             key={card.title}
-            className='bg-white shadow-md rounded-lg p-4 border'
+            className={`bg-gradient-to-br ${card.color} shadow-xl rounded-2xl p-6 border border-blue-100 flex flex-col items-center transition-transform hover:scale-105 min-w-[150px] min-h-[120px] w-full`}
           >
-            <h2 className='text-lg font-semibold'>{card.title}</h2>
-            <p className='text-2xl font-bold text-blue-600'>
-              {card.count ?? "..."}
+            <h2 className='text-lg font-semibold text-white mb-2 tracking-wide text-center break-words'>
+              {card.title}
+            </h2>
+            <p className='text-4xl font-extrabold text-white drop-shadow-lg text-center'>
+              {card.count ?? <Spinner />}
             </p>
           </div>
         ))}
       </div>
-      <RoomDiagram />
-      <div className='flex flex-col gap-1'>
-        <Link to='/admin/students' className='text-blue-500'>
-          Students
-        </Link>
-        <Link to='/admin/complaints' className='text-blue-500'>
-          Complaints
-        </Link>
-        <Link to='/admin/rooms' className='text-blue-500'>
-          Rooms
-        </Link>
-        <Link to='/admin/leaves' className='text-blue-500'>
-          Leaves
-        </Link>
-        <Link to='/admin/fees' className='text-blue-500'>
-          Fees
-        </Link>
+      <div className='bg-white rounded-2xl shadow-xl p-6 border mb-8 overflow-x-auto'>
+        <h2 className='text-xl font-bold mb-4 text-blue-800'>
+          Room Assignment Overview
+        </h2>
+        <RoomDiagram />
       </div>
     </div>
   );

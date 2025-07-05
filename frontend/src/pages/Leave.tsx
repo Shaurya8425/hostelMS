@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import SkeletonLeave from "../components/SkeletonLeave";
 
 export default function Leave() {
   const [form, setForm] = useState({
@@ -11,6 +12,7 @@ export default function Leave() {
 
   const [leaves, setLeaves] = useState([]);
   const [studentId, setStudentId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -72,80 +74,94 @@ export default function Leave() {
   };
 
   useEffect(() => {
-    if (studentId) fetchLeaves(studentId);
+    if (studentId) fetchLeaves(studentId).finally(() => setLoading(false));
     // eslint-disable-next-line
   }, [studentId]);
 
+  if (loading) return <SkeletonLeave />;
+
   return (
     <div className='p-6 max-w-3xl mx-auto'>
-      <h2 className='text-2xl font-semibold mb-4'>Apply for Leave</h2>
+      <h2 className='text-3xl font-extrabold mb-8 text-blue-900 flex items-center gap-2'>
+        <span role='img' aria-label='leave'>
+          🌳
+        </span>{" "}
+        Apply for Leave
+      </h2>
       <form
         onSubmit={handleSubmit}
-        className='grid gap-4 bg-white p-4 shadow rounded-lg'
+        className='grid gap-4 bg-white p-6 shadow rounded-xl border mb-8'
       >
-        <input
-          type='date'
-          name='fromDate'
-          value={form.fromDate}
-          onChange={handleChange}
-          required
-          className='border p-2 rounded'
-        />
-        <input
-          type='date'
-          name='toDate'
-          value={form.toDate}
-          onChange={handleChange}
-          required
-          className='border p-2 rounded'
-        />
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+          <input
+            type='date'
+            name='fromDate'
+            value={form.fromDate}
+            onChange={handleChange}
+            required
+            className='border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition shadow-sm'
+          />
+          <input
+            type='date'
+            name='toDate'
+            value={form.toDate}
+            onChange={handleChange}
+            required
+            className='border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition shadow-sm'
+          />
+        </div>
         <textarea
           name='reason'
           value={form.reason}
           onChange={handleChange}
           placeholder='Reason for leave'
           required
-          className='border p-2 rounded'
+          className='border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition shadow-sm min-h-[80px]'
         ></textarea>
         <button
           type='submit'
-          className='bg-blue-600 text-white p-2 rounded hover:bg-blue-700'
+          className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
           disabled={!studentId}
         >
           Submit
         </button>
       </form>
 
-      <h3 className='text-xl font-semibold mt-8 mb-2'>Your Leave Requests</h3>
-      <div className='overflow-auto'>
-        <table className='min-w-full border text-sm mt-2'>
+      <h3 className='text-xl font-bold mb-4 text-blue-800'>
+        Your Leave Requests
+      </h3>
+      <div className='overflow-auto bg-white rounded-xl shadow border p-4'>
+        <table className='min-w-full border-separate border-spacing-y-2 text-sm'>
           <thead>
-            <tr className='bg-gray-100'>
-              <th className='border px-4 py-2'>From</th>
-              <th className='border px-4 py-2'>To</th>
-              <th className='border px-4 py-2'>Reason</th>
-              <th className='border px-4 py-2'>Status</th>
+            <tr className='bg-blue-50'>
+              <th className='border-b px-4 py-2'>From</th>
+              <th className='border-b px-4 py-2'>To</th>
+              <th className='border-b px-4 py-2'>Reason</th>
+              <th className='border-b px-4 py-2'>Status</th>
             </tr>
           </thead>
           <tbody>
             {leaves.map((leave: any) => (
-              <tr key={leave.id}>
-                <td className='border px-4 py-2'>
+              <tr
+                key={leave.id}
+                className='hover:bg-blue-50 rounded-lg transition'
+              >
+                <td className='px-4 py-2'>
                   {new Date(leave.fromDate).toLocaleDateString()}
                 </td>
-                <td className='border px-4 py-2'>
+                <td className='px-4 py-2'>
                   {new Date(leave.toDate).toLocaleDateString()}
                 </td>
-                <td className='border px-4 py-2'>{leave.reason}</td>
-                <td className='border px-4 py-2'>
+                <td className='px-4 py-2'>{leave.reason}</td>
+                <td className='px-4 py-2'>
                   <span
-                    className={`px-2 py-1 rounded ${
+                    className={
                       leave.status === "APPROVED"
-                        ? "bg-green-200 text-green-800"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
                         : leave.status === "REJECTED"
-                        ? "bg-red-200 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                        ? "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
                   >
                     {leave.status}
                   </span>

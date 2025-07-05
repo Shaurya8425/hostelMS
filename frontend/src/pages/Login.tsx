@@ -26,9 +26,9 @@ export default function Login() {
       }
 
       if (user.role === "ADMIN") {
-        window.location.href = "/admin-dashboard";
+        window.location.href = "/admin/dashboard";
       } else {
-        window.location.href = "/student-dashboard";
+        window.location.href = "/student/dashboard";
       }
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Login failed");
@@ -76,13 +76,6 @@ export default function Login() {
               required
             />
 
-            <div className='flex items-center'>
-              <input type='checkbox' id='remember' className='mr-2' />
-              <label htmlFor='remember' className='text-sm text-gray-600'>
-                Remember me
-              </label>
-            </div>
-
             <button
               type='submit'
               className='w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200'
@@ -98,9 +91,6 @@ export default function Login() {
                 Signup
               </Link>
             </p>
-            <button className='text-blue-500 hover:underline'>
-              Forgot password?
-            </button>
           </div>
         </div>
       </div>

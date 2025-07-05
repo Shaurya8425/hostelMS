@@ -17,16 +17,23 @@ import AdminComplaints from "./pages/admin/Complaints";
 import AdminRooms from "./pages/admin/Rooms";
 import AdminLeaves from "./pages/admin/Leaves";
 import AdminFees from "./pages/admin/Fees";
+import AdminNavbar from "./components/AdminNavbar";
+import StudentNavbar from "./components/StudentNavbar";
+import { getUserRole } from "./utils/getUserRole";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
+  const role = getUserRole();
   return (
-    <>
+    <AuthProvider>
       <Router>
+        {role === "ADMIN" && <AdminNavbar />}
+        {role === "STUDENT" && <StudentNavbar />}
         <Routes>
           <Route path='/' element={<Login />} />
           <Route path='/signup' element={<Signup />} />
           <Route
-            path='/admin-dashboard'
+            path='admin/dashboard'
             element={
               <ProtectedRoute role='ADMIN'>
                 <AdminDashboard />
@@ -74,10 +81,9 @@ function App() {
             }
           />
 
-
           {/* Student Pages */}
           <Route
-            path='/student-dashboard'
+            path='student/dashboard'
             element={
               <ProtectedRoute role='STUDENT'>
                 <StudentDashboard />
@@ -93,7 +99,7 @@ function App() {
             }
           />
           <Route
-            path='/complaint'
+            path='/student/complaints'
             element={
               <ProtectedRoute role='STUDENT'>
                 <Complaint />
@@ -101,7 +107,7 @@ function App() {
             }
           />
           <Route
-            path='/leave'
+            path='/student/leaves'
             element={
               <ProtectedRoute role='STUDENT'>
                 <Leave />
@@ -109,7 +115,7 @@ function App() {
             }
           />
           <Route
-            path='/fee'
+            path='/student/fees'
             element={
               <ProtectedRoute role='STUDENT'>
                 <Fees />
@@ -117,7 +123,7 @@ function App() {
             }
           />
           <Route
-            path='/rooms'
+            path='student/room'
             element={
               <ProtectedRoute role='STUDENT'>
                 <StudentRoom />
@@ -127,7 +133,7 @@ function App() {
         </Routes>
       </Router>
       <ToastContainer />
-    </>
+    </AuthProvider>
   );
 }
 

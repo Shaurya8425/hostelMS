@@ -52,31 +52,47 @@ export default function AdminComplaints() {
   }, []);
 
   return (
-    <div className='p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Complaint Management</h1>
-      <div className='overflow-x-auto'>
-        <table className='w-full text-left border'>
-          <thead className='bg-gray-100'>
+    <div className='p-2 sm:p-6'>
+      <h1 className='text-2xl sm:text-3xl font-extrabold mb-6 text-blue-900'>
+        Complaint Management
+      </h1>
+      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
+        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm'>
+          <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border'>Subject</th>
-              <th className='p-2 border'>Description</th>
-              <th className='p-2 border'>Student</th>
-              <th className='p-2 border'>Status</th>
-              <th className='p-2 border'>Actions</th>
+              <th className='p-2 border-b'>Subject</th>
+              <th className='p-2 border-b'>Description</th>
+              <th className='p-2 border-b'>Student</th>
+              <th className='p-2 border-b'>Status</th>
+              <th className='p-2 border-b'>Actions</th>
             </tr>
           </thead>
           <tbody>
             {complaints.map((c) => (
-              <tr key={c.id}>
-                <td className='p-2 border'>{c.subject}</td>
-                <td className='p-2 border'>{c.description}</td>
-                <td className='p-2 border'>
-                  {c.student.name} ({c.student.rollNumber})
+              <tr key={c.id} className='hover:bg-blue-50 rounded-lg transition'>
+                <td className='p-2'>{c.subject}</td>
+                <td className='p-2'>{c.description}</td>
+                <td className='p-2'>
+                  <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                    {c.student.name} ({c.student.rollNumber})
+                  </span>
                 </td>
-                <td className='p-2 border'>{c.status}</td>
-                <td className='p-2 border space-x-2'>
+                <td className='p-2'>
+                  <span
+                    className={
+                      c.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : c.status === "RESOLVED"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
+                  >
+                    {c.status}
+                  </span>
+                </td>
+                <td className='p-2 space-x-2'>
                   <select
-                    className='border p-1 rounded'
+                    className='border p-1 rounded shadow-sm bg-white'
                     value={c.status}
                     onChange={(e) =>
                       handleStatusChange(

@@ -62,7 +62,7 @@ export default function RoomDiagram() {
                   <h4 className='font-semibold mb-2'>
                     {floor === 0 ? "Ground Floor" : `Floor ${floor}`}
                   </h4>
-                  <div className='grid grid-cols-8 gap-2'>
+                  <div className='grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 w-full overflow-x-auto'>
                     {rooms
                       .filter((r) => r.block === wing && r.floor === floor)
                       .sort(
@@ -71,7 +71,7 @@ export default function RoomDiagram() {
                       .map((room) => (
                         <div
                           key={room.id}
-                          className={`border rounded p-2 text-center text-xs ${
+                          className={`border rounded p-2 text-center text-xs min-w-[90px] ${
                             statusColor[room.status]
                           }`}
                           title={

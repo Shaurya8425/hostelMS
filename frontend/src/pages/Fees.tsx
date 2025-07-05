@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import SkeletonFees from "../components/SkeletonFees";
 
 type FeePayment = {
   id: number;
@@ -14,6 +15,7 @@ type FeePayment = {
 export default function Fees() {
   const [fees, setFees] = useState<FeePayment[]>([]);
   const [studentId, setStudentId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token") || "";
 
   // Fetch studentId from /auth/me for reliability
@@ -49,45 +51,61 @@ export default function Fees() {
   };
 
   useEffect(() => {
-    if (studentId) fetchFees(studentId);
+    if (studentId) fetchFees(studentId).finally(() => setLoading(false));
   }, [studentId]);
+
+  if (loading) return <SkeletonFees />;
 
   return (
     <div className='p-6 max-w-4xl mx-auto'>
-      <h2 className='text-2xl font-bold mb-4'>Fee Payment History</h2>
+      <h2 className='text-3xl font-extrabold mb-8 text-purple-900 flex items-center gap-2'>
+        <span role='img' aria-label='fees'>
+          💳
+        </span>{" "}
+        Fee Payment History
+      </h2>
 
-      <div className='overflow-x-auto'>
-        <table className='min-w-full text-sm border'>
+      <div className='overflow-x-auto bg-white rounded-xl shadow border p-4'>
+        <table className='min-w-full border-separate border-spacing-y-2 text-sm'>
           <thead>
-            <tr className='bg-gray-100 text-left'>
-              <th className='p-2 border'>Amount (₹)</th>
-              <th className='p-2 border'>Due Date</th>
-              <th className='p-2 border'>Status</th>
-              <th className='p-2 border'>Paid At</th>
+            <tr className='bg-purple-50 text-left'>
+              <th className='p-2 border-b'>Amount (₹)</th>
+              <th className='p-2 border-b'>Due Date</th>
+              <th className='p-2 border-b'>Status</th>
+              <th className='p-2 border-b'>Paid At</th>
             </tr>
           </thead>
           <tbody>
             {fees.map((fee) => (
-              <tr key={fee.id} className='border-t'>
-                <td className='p-2 border'>₹{fee.amount}</td>
-                <td className='p-2 border'>
+              <tr
+                key={fee.id}
+                className='hover:bg-purple-50 rounded-lg transition'
+              >
+                <td className='p-2'>
+                  <span className='font-semibold'>₹{fee.amount}</span>
+                </td>
+                <td className='p-2'>
                   {new Date(fee.dueDate).toLocaleDateString()}
                 </td>
-                <td className='p-2 border'>
+                <td className='p-2'>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${
+                    className={
                       fee.status === "PAID"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
                         : fee.status === "OVERDUE"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                        ? "bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
                   >
                     {fee.status}
                   </span>
                 </td>
-                <td className='p-2 border'>
-                  {fee.paidAt ? new Date(fee.paidAt).toLocaleDateString() : "-"}
+                <td className='p-2'>
+                  {fee.paidAt ? (
+                    new Date(fee.paidAt).toLocaleDateString()
+                  ) : (
+                    <span className='text-gray-400 italic'>-</span>
+                  )}
                 </td>
               </tr>
             ))}

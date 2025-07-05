@@ -1,57 +1,261 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import Complaint from "./Complaint";
 import { Link } from "react-router-dom";
+import SkeletonDashboard from "../components/SkeletonDashboard";
 
 export default function StudentDashboard() {
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    const checkProfile = async () => {
+    const fetchData = async () => {
       const token = localStorage.getItem("token");
       if (!token) return;
-
       try {
+        // Get user info
         const res = await axios.get("http://localhost:3000/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { user } = res.data;
+        console.log("Fetched user from /auth/me:", user);
         if (user.role === "STUDENT" && user.studentId === null) {
           window.location.href = "/complete-profile";
           return;
         }
-      } catch (err) {
-        // If unauthorized, redirect to login
-        if (
-          typeof err === "object" &&
-          err !== null &&
-          "response" in err &&
-          typeof (err as any).response === "object" &&
-          ((err as any).response.status === 401 ||
-            (err as any).response.status === 403)
-        ) {
-          localStorage.removeItem("token");
-          window.location.href = "/"; // or your login route
+        // Get student profile (with room, complaints, leaves, payments)
+        console.log("Requesting /students/" + user.studentId);
+        const studentRes = await axios.get(
+          `http://localhost:3000/students/${user.studentId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // Robustly handle both { data: student } and student object
+        const studentData = studentRes.data?.data || studentRes.data;
+        setProfile(studentData);
+        console.log("Student profile loaded:", studentData);
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          setError(
+            "Student profile not found. Please complete your profile or contact the administrator."
+          );
+        } else {
+          setError("Failed to load dashboard data");
         }
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          localStorage.removeItem("token");
+          window.location.href = "/";
+        }
+      } finally {
+        setLoading(false);
       }
     };
-
-    checkProfile();
+    fetchData();
   }, []);
 
+  if (loading) return <SkeletonDashboard />;
+  if (error) return <div className='p-6 text-red-500'>{error}</div>;
+  if (!profile) return null;
+
+  const {
+    name,
+    email,
+    branch,
+    year,
+    rollNumber,
+    gender,
+    division,
+    course,
+    fromDate,
+    toDate,
+    linenIssued,
+    room,
+    complaints,
+    leaves,
+    payments,
+  } = profile;
+
   return (
-    <div className='flex flex-col max-w-3xl mx-auto p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Student Dashboard</h1>
-      <Link to='/complaint' className='text-blue-500'>
-        Complaint
-      </Link>
-      <Link to='/leave' className='text-blue-500'>
-        Leave
-      </Link>
-      <Link to='/fee' className='text-blue-500'>
-        Fees
-      </Link>
-      <Link to='/rooms' className='text-blue-500'>
-        Rooms
-      </Link>
+    <div className='flex flex-col max-w-3xl mx-auto p-6 gap-6'>
+      <h1 className='text-3xl font-extrabold mb-8 text-green-900 flex items-center gap-2'>
+        <span role='img' aria-label='student'>
+          🎓
+        </span>{" "}
+        Student Dashboard
+      </h1>
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-3 text-green-800'>Profile</h2>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2'>
+          <div>
+            <span className='font-semibold'>Name:</span> {name}
+          </div>
+          <div>
+            <span className='font-semibold'>Email:</span> {email}
+          </div>
+          <div>
+            <span className='font-semibold'>Branch:</span> {branch}
+          </div>
+          <div>
+            <span className='font-semibold'>Year:</span> {year}
+          </div>
+          <div>
+            <span className='font-semibold'>Roll Number:</span> {rollNumber}
+          </div>
+          <div>
+            <span className='font-semibold'>Gender:</span> {gender}
+          </div>
+          <div>
+            <span className='font-semibold'>Division:</span> {division}
+          </div>
+          <div>
+            <span className='font-semibold'>Course:</span> {course}
+          </div>
+          <div>
+            <span className='font-semibold'>From:</span>{" "}
+            {fromDate ? new Date(fromDate).toLocaleDateString() : ""}
+          </div>
+          <div>
+            <span className='font-semibold'>To:</span>{" "}
+            {toDate ? new Date(toDate).toLocaleDateString() : ""}
+          </div>
+          <div>
+            <span className='font-semibold'>Linen Issued:</span> {linenIssued}
+          </div>
+        </div>
+      </div>
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-3 text-green-800'>
+          Room Assignment
+        </h2>
+        {room ? (
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2'>
+            <div>
+              <span className='font-semibold'>Block:</span> {room.block}
+            </div>
+            <div>
+              <span className='font-semibold'>Floor:</span> {room.floor}
+            </div>
+            <div>
+              <span className='font-semibold'>Designation:</span>{" "}
+              {room.designation}
+            </div>
+            <div>
+              <span className='font-semibold'>Status:</span>{" "}
+              <span
+                className={
+                  room.status === "AVAILABLE"
+                    ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    : room.status === "OCCUPIED"
+                    ? "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    : room.status === "RESERVED"
+                    ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                }
+              >
+                {room.status}
+              </span>
+            </div>
+            <div>
+              <span className='font-semibold'>Room No:</span> {room.roomNumber}
+            </div>
+          </div>
+        ) : (
+          <div className='text-gray-500 italic'>No room assigned</div>
+        )}
+      </div>
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-3 text-green-800'>Complaints</h2>
+        {complaints && complaints.length > 0 ? (
+          <ul className='list-disc ml-6 space-y-1'>
+            {complaints.map((c: any) => (
+              <li key={c.id}>
+                <span className='font-semibold'>{c.subject}</span> -{" "}
+                <span
+                  className={
+                    c.status === "PENDING"
+                      ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : c.status === "RESOLVED"
+                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                  }
+                >
+                  {c.status}
+                </span>{" "}
+                ({new Date(c.createdAt).toLocaleDateString()})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className='text-gray-500 italic'>No complaints filed</div>
+        )}
+        <Link
+          to='/student/complaints'
+          className='text-blue-600 underline mt-2 inline-block font-semibold hover:text-blue-800 transition'
+        >
+          File Complaint
+        </Link>
+      </div>
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-3 text-green-800'>Leaves</h2>
+        {leaves && leaves.length > 0 ? (
+          <ul className='list-disc ml-6 space-y-1'>
+            {leaves.map((l: any) => (
+              <li key={l.id}>
+                {new Date(l.fromDate).toLocaleDateString()} to{" "}
+                {new Date(l.toDate).toLocaleDateString()} -{" "}
+                <span
+                  className={
+                    l.status === "PENDING"
+                      ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : l.status === "APPROVED"
+                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                  }
+                >
+                  {l.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className='text-gray-500 italic'>No leave applications</div>
+        )}
+        <Link
+          to='/student/leaves'
+          className='text-blue-600 underline mt-2 inline-block font-semibold hover:text-blue-800 transition'
+        >
+          Apply for Leave
+        </Link>
+      </div>
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-3 text-green-800'>Fee Payments</h2>
+        {payments && payments.length > 0 ? (
+          <ul className='list-disc ml-6 space-y-1'>
+            {payments.map((p: any) => (
+              <li key={p.id}>
+                Amount: <span className='font-semibold'>₹{p.amount}</span> |
+                Due: {new Date(p.dueDate).toLocaleDateString()} | Status:{" "}
+                <span
+                  className={
+                    p.status === "PAID"
+                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                  }
+                >
+                  {p.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className='text-gray-500 italic'>No fee records</div>
+        )}
+        <Link
+          to='/student/fees'
+          className='text-blue-600 underline mt-2 inline-block font-semibold hover:text-blue-800 transition'
+        >
+          View/Pay Fees
+        </Link>
+      </div>
     </div>
   );
 }

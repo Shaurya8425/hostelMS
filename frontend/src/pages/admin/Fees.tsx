@@ -80,12 +80,14 @@ export default function AdminFees() {
   };
 
   return (
-    <div className='p-6'>
-      <div className='flex justify-between mb-4'>
-        <h1 className='text-2xl font-bold'>Fee Management</h1>
+    <div className='p-2 sm:p-6'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
+        <h1 className='text-2xl sm:text-3xl font-extrabold text-blue-900'>
+          Fee Management
+        </h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className='bg-blue-600 text-white px-4 py-2 rounded'
+          className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition w-full sm:w-auto'
         >
           {showForm ? "Cancel" : "+ Add Fee"}
         </button>
@@ -94,7 +96,7 @@ export default function AdminFees() {
       {showForm && (
         <form
           onSubmit={handleAddFee}
-          className='bg-gray-50 p-4 border rounded space-y-2 mb-4'
+          className='bg-white p-4 sm:p-6 border rounded-xl shadow space-y-2 mb-6 max-w-md w-full'
         >
           <input
             type='number'
@@ -124,52 +126,63 @@ export default function AdminFees() {
           />
           <button
             type='submit'
-            className='bg-green-600 text-white px-4 py-2 rounded'
+            className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-2 rounded shadow hover:from-green-600 hover:to-green-800 transition'
           >
             Add Fee
           </button>
         </form>
       )}
 
-      <div className='overflow-x-auto'>
-        <table className='w-full border text-left'>
-          <thead className='bg-gray-100'>
+      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
+        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm'>
+          <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border'>Student</th>
-              <th className='p-2 border'>Roll No</th>
-              <th className='p-2 border'>Amount</th>
-              <th className='p-2 border'>Due Date</th>
-              <th className='p-2 border'>Status</th>
-              <th className='p-2 border'>Paid At</th>
-              <th className='p-2 border'>Actions</th>
+              <th className='p-2 border-b'>Student</th>
+              <th className='p-2 border-b'>Roll No</th>
+              <th className='p-2 border-b'>Amount</th>
+              <th className='p-2 border-b'>Due Date</th>
+              <th className='p-2 border-b'>Status</th>
+              <th className='p-2 border-b'>Paid At</th>
+              <th className='p-2 border-b'>Actions</th>
             </tr>
           </thead>
           <tbody>
             {fees.map((fee) => (
-              <tr key={fee.id}>
-                <td className='p-2 border'>{fee.student.name}</td>
-                <td className='p-2 border'>{fee.student.rollNumber}</td>
-                <td className='p-2 border'>₹{fee.amount}</td>
-                <td className='p-2 border'>
-                  {new Date(fee.dueDate).toDateString()}
+              <tr
+                key={fee.id}
+                className='hover:bg-blue-50 rounded-lg transition'
+              >
+                <td className='p-2'>
+                  <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                    {fee.student.name}
+                  </span>
                 </td>
-                <td className='p-2 border'>
+                <td className='p-2'>{fee.student.rollNumber}</td>
+                <td className='p-2'>₹{fee.amount}</td>
+                <td className='p-2'>{new Date(fee.dueDate).toDateString()}</td>
+                <td className='p-2'>
                   <span
-                    className={`px-2 py-1 text-white rounded ${
-                      fee.status === "PAID" ? "bg-green-600" : "bg-yellow-500"
-                    }`}
+                    className={
+                      fee.status === "PAID"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
                   >
                     {fee.status}
                   </span>
                 </td>
-                <td className='p-2 border'>
-                  {fee.paidAt ? new Date(fee.paidAt).toLocaleDateString() : "-"}
+                <td className='p-2'>
+                  {fee.paidAt ? (
+                    new Date(fee.paidAt).toLocaleDateString()
+                  ) : (
+                    <span className='text-gray-400 italic'>-</span>
+                  )}
                 </td>
-                <td className='p-2 border'>
+                <td className='p-2'>
                   {fee.status === "PENDING" && (
                     <button
                       onClick={() => markAsPaid(fee.id)}
-                      className='bg-green-600 text-white px-2 py-1 rounded text-sm'
+                      className='bg-gradient-to-r from-green-500 to-green-700 text-white px-2 py-1 rounded shadow hover:from-green-600 hover:to-green-800 text-sm transition'
                     >
                       Mark as Paid
                     </button>
