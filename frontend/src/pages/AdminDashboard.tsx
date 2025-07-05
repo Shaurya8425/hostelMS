@@ -1,7 +1,6 @@
 // src/pages/AdminDashboard.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import RoomDiagram from "../components/RoomDiagram";
 import Spinner from "../components/Spinner";
 

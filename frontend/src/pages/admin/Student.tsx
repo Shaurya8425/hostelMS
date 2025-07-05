@@ -77,19 +77,6 @@ export default function AdminStudents() {
     // eslint-disable-next-line
   }, [search, page]);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this student?")) return;
-    try {
-      await axios.delete(`http://localhost:3000/students/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Student deleted");
-      fetchStudents();
-    } catch (err) {
-      toast.error("Failed to delete");
-    }
-  };
-
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
