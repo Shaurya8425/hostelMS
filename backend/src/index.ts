@@ -16,7 +16,11 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: "http://localhost:5173", // or '*' for all origins
+    origin: [
+      "http://localhost:5173",
+      "https://hostel-ms-psi.vercel.app",
+      "https://hostelms-3z7d.onrender.com",
+    ], // allow local, vercel, and render frontend
     credentials: true,
   })
 );
