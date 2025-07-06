@@ -132,7 +132,8 @@ export default function Leave() {
         Your Leave Requests
       </h3>
       <div className='overflow-auto bg-white rounded-xl shadow border p-4'>
-        <table className='min-w-full border-separate border-spacing-y-2 text-sm'>
+        {/* Table for desktop */}
+        <table className='min-w-full border-separate border-spacing-y-2 text-sm hidden sm:table'>
           <thead>
             <tr className='bg-blue-50'>
               <th className='border-b px-4 py-2'>From</th>
@@ -171,9 +172,47 @@ export default function Leave() {
             ))}
           </tbody>
         </table>
-        {leaves.length === 0 && (
-          <p className='text-gray-600 mt-2'>No leave records found.</p>
-        )}
+        {/* Card layout for mobile */}
+        <div className='sm:hidden flex flex-col gap-4'>
+          {leaves.map((leave: any) => (
+            <div
+              key={leave.id}
+              className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>
+                  From: {new Date(leave.fromDate).toLocaleDateString()}
+                </span>
+                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {leave.status}
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>To:</span>
+                <span>{new Date(leave.toDate).toLocaleDateString()}</span>
+                <span className='font-semibold'>Reason:</span>
+                <span>{leave.reason}</span>
+              </div>
+              <div className='mt-2 text-xs text-gray-600'>
+                <span className='font-semibold'>Status: </span>
+                <span
+                  className={
+                    leave.status === "APPROVED"
+                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : leave.status === "REJECTED"
+                      ? "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                  }
+                >
+                  {leave.status}
+                </span>
+              </div>
+            </div>
+          ))}
+          {leaves.length === 0 && (
+            <div className='p-4 text-center'>No leave records found.</div>
+          )}
+        </div>
       </div>
     </div>
   );

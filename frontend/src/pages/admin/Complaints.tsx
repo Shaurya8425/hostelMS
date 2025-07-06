@@ -58,7 +58,8 @@ export default function AdminComplaints() {
         Complaint Management
       </h1>
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
-        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm'>
+        {/* Table for desktop */}
+        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
               <th className='p-2 border-b'>Subject</th>
@@ -118,6 +119,59 @@ export default function AdminComplaints() {
             )}
           </tbody>
         </table>
+        {/* Card layout for mobile */}
+        <div className='sm:hidden flex flex-col gap-4'>
+          {complaints.map((c) => (
+            <div
+              key={c.id}
+              className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>{c.subject}</span>
+                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {c.student.name} ({c.student.rollNumber})
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>Description:</span>
+                <span>{c.description}</span>
+                <span className='font-semibold'>Status:</span>
+                <span>
+                  <span
+                    className={
+                      c.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : c.status === "RESOLVED"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
+                  >
+                    {c.status}
+                  </span>
+                </span>
+              </div>
+              <div className='flex gap-2 mt-2'>
+                <select
+                  className='border p-1 rounded shadow-sm bg-white'
+                  value={c.status}
+                  onChange={(e) =>
+                    handleStatusChange(
+                      c.id,
+                      e.target.value as Complaint["status"]
+                    )
+                  }
+                >
+                  <option value='PENDING'>Pending</option>
+                  <option value='RESOLVED'>Resolved</option>
+                  <option value='REJECTED'>Rejected</option>
+                </select>
+              </div>
+            </div>
+          ))}
+          {complaints.length === 0 && (
+            <div className='p-4 text-center'>No complaints found</div>
+          )}
+        </div>
       </div>
     </div>
   );

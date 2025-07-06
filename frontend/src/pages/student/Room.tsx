@@ -125,7 +125,8 @@ export default function StudentRoom() {
 
       {/* Available Rooms */}
       <h3 className='text-xl font-bold mb-4 text-blue-800'>Available Rooms</h3>
-      <div className='grid md:grid-cols-2 gap-6'>
+      {/* Grid for md+ screens */}
+      <div className='hidden md:grid md:grid-cols-2 gap-6'>
         {rooms
           .filter((room) => room.students.length < room.capacity)
           .map((room) => (
@@ -160,6 +161,49 @@ export default function StudentRoom() {
                 <button
                   onClick={() => handleAssign(room.id)}
                   className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-2 rounded-full shadow hover:from-green-600 hover:to-green-800 font-semibold transition'
+                >
+                  Choose
+                </button>
+              )}
+            </div>
+          ))}
+      </div>
+      {/* Card layout for mobile */}
+      <div className='md:hidden flex flex-col gap-4'>
+        {rooms
+          .filter((room) => room.students.length < room.capacity)
+          .map((room) => (
+            <div
+              key={room.id}
+              className='bg-white border p-4 rounded-xl shadow flex flex-col gap-2 hover:shadow-lg transition'
+            >
+              <div className='flex justify-between'>
+                <span className='font-bold text-base text-blue-700'>
+                  {room.roomNumber}
+                </span>
+                <span className='text-xs text-gray-500'>
+                  Block {room.block}
+                </span>
+              </div>
+              <div className='text-xs text-gray-700'>
+                Capacity:{" "}
+                <span className='font-semibold'>{room.students.length}</span> /{" "}
+                {room.capacity}
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                {room.students.map((s) => (
+                  <span
+                    key={s.id}
+                    className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'
+                  >
+                    {s.name} ({s.rollNumber})
+                  </span>
+                ))}
+              </div>
+              {!currentRoom && (
+                <button
+                  onClick={() => handleAssign(room.id)}
+                  className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-2 rounded-full shadow hover:from-green-600 hover:to-green-800 font-semibold transition mt-2'
                 >
                   Choose
                 </button>

@@ -135,7 +135,8 @@ export default function AdminFees() {
       )}
 
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
-        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm'>
+        {/* Table for desktop */}
+        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
               <th className='p-2 border-b'>Student</th>
@@ -200,6 +201,61 @@ export default function AdminFees() {
             )}
           </tbody>
         </table>
+        {/* Card layout for mobile */}
+        <div className='sm:hidden flex flex-col gap-4'>
+          {fees.map((fee) => (
+            <div
+              key={fee.id}
+              className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>{fee.student.name}</span>
+                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {fee.student.rollNumber}
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>Amount:</span>
+                <span>₹{fee.amount}</span>
+                <span className='font-semibold'>Due Date:</span>
+                <span>{new Date(fee.dueDate).toLocaleDateString()}</span>
+                <span className='font-semibold'>Status:</span>
+                <span>
+                  <span
+                    className={
+                      fee.status === "PAID"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
+                  >
+                    {fee.status}
+                  </span>
+                </span>
+                <span className='font-semibold'>Paid At:</span>
+                <span>
+                  {fee.paidAt ? (
+                    new Date(fee.paidAt).toLocaleDateString()
+                  ) : (
+                    <span className='text-gray-400 italic'>-</span>
+                  )}
+                </span>
+              </div>
+              {fee.status === "PENDING" && (
+                <div className='flex gap-2 mt-2'>
+                  <button
+                    onClick={() => markAsPaid(fee.id)}
+                    className='bg-gradient-to-r from-green-500 to-green-700 text-white px-2 py-1 rounded shadow hover:from-green-600 hover:to-green-800 text-sm transition'
+                  >
+                    Mark as Paid
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {fees.length === 0 && (
+            <div className='p-4 text-center'>No fee records found.</div>
+          )}
+        </div>
       </div>
     </div>
   );

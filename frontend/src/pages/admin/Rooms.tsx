@@ -258,7 +258,8 @@ export default function AdminRooms() {
 
       {/* Room List */}
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4 mt-4'>
-        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm'>
+        {/* Table for desktop */}
+        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
               <th className='p-2 border-b'>Room Number</th>
@@ -325,6 +326,45 @@ export default function AdminRooms() {
             )}
           </tbody>
         </table>
+        {/* Card layout for mobile */}
+        <div className='sm:hidden flex flex-col gap-4'>
+          {rooms.map((room) => (
+            <div
+              key={room.id}
+              className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>Room {room.roomNumber}</span>
+                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {room.block}
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>Floor:</span>
+                <span>{room.floor}</span>
+                <span className='font-semibold'>Designation:</span>
+                <span>{room.designation || "-"}</span>
+                <span className='font-semibold'>Capacity:</span>
+                <span>{room.capacity}</span>
+                <span className='font-semibold'>Status:</span>
+                <span>{room.status}</span>
+                <span className='font-semibold'>Occupied:</span>
+                <span>{room.students.length}</span>
+                <span className='font-semibold'>Students:</span>
+                <span>
+                  {room.students.length > 0
+                    ? room.students
+                        .map((s) => `${s.name} (${s.rollNumber})`)
+                        .join(", ")
+                    : "-"}
+                </span>
+              </div>
+            </div>
+          ))}
+          {rooms.length === 0 && (
+            <div className='p-4 text-center'>No rooms found</div>
+          )}
+        </div>
       </div>
     </div>
   );

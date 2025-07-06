@@ -64,7 +64,8 @@ export default function Fees() {
       </h2>
 
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-4'>
-        <table className='min-w-full border-separate border-spacing-y-2 text-sm'>
+        {/* Table for desktop */}
+        <table className='min-w-full border-separate border-spacing-y-2 text-sm hidden sm:table'>
           <thead>
             <tr className='bg-purple-50 text-left'>
               <th className='p-2 border-b'>Amount (₹)</th>
@@ -109,9 +110,51 @@ export default function Fees() {
             ))}
           </tbody>
         </table>
-        {fees.length === 0 && (
-          <p className='text-gray-600 mt-4'>No fee records available.</p>
-        )}
+        {/* Card layout for mobile */}
+        <div className='sm:hidden flex flex-col gap-4'>
+          {fees.map((fee) => (
+            <div
+              key={fee.id}
+              className='bg-purple-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>₹{fee.amount}</span>
+                <span className='bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {fee.status}
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>Due Date:</span>
+                <span>{new Date(fee.dueDate).toLocaleDateString()}</span>
+                <span className='font-semibold'>Paid At:</span>
+                <span>
+                  {fee.paidAt ? (
+                    new Date(fee.paidAt).toLocaleDateString()
+                  ) : (
+                    <span className='text-gray-400 italic'>-</span>
+                  )}
+                </span>
+              </div>
+              <div className='mt-2 text-xs text-gray-600'>
+                <span className='font-semibold'>Status: </span>
+                <span
+                  className={
+                    fee.status === "PAID"
+                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : fee.status === "OVERDUE"
+                      ? "bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold"
+                      : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                  }
+                >
+                  {fee.status}
+                </span>
+              </div>
+            </div>
+          ))}
+          {fees.length === 0 && (
+            <div className='p-4 text-center'>No fee records available.</div>
+          )}
+        </div>
       </div>
     </div>
   );

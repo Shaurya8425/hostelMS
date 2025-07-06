@@ -82,7 +82,48 @@ export default function Complaint() {
         <h2 className='text-xl font-bold mb-4 text-blue-800'>
           Complaint History
         </h2>
-        <ComplaintList complaints={complaints} />
+        {/* Responsive: table for sm+, cards for mobile */}
+        <div className='hidden sm:block'>
+          <ComplaintList complaints={complaints} />
+        </div>
+        <div className='sm:hidden flex flex-col gap-4'>
+          {complaints.map((c) => (
+            <div
+              key={c.id}
+              className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>{c.subject}</span>
+                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {c.status}
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>Description:</span>
+                <span>{c.description}</span>
+                <span className='font-semibold'>Created:</span>
+                <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className='mt-2 text-xs text-gray-600'>
+                <span className='font-semibold'>Status: </span>
+                <span
+                  className={
+                    c.status === "PENDING"
+                      ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : c.status === "RESOLVED"
+                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                      : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                  }
+                >
+                  {c.status}
+                </span>
+              </div>
+            </div>
+          ))}
+          {complaints.length === 0 && (
+            <div className='p-4 text-center'>No complaints found</div>
+          )}
+        </div>
       </section>
     </div>
   );
