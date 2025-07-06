@@ -16,7 +16,7 @@ export default function AdminNavbar() {
     navigate("/");
   };
   // Hide navbar on login and root routes
-  if (!isAuthenticated || ["/login", "/"].includes(location.pathname))
+  if (!isAuthenticated || ["/login","/signup", "/"].includes(location.pathname))
     return null;
   return (
     <nav className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-3 flex flex-wrap md:flex-nowrap justify-between items-center shadow-lg rounded-b-2xl'>
