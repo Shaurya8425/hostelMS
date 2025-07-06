@@ -1,12 +1,20 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+function closeMenu() {
+  const menu = document.getElementById(
+    "student-menu-toggle"
+  ) as HTMLInputElement;
+  if (menu) menu.checked = false;
+}
+
 export default function StudentNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, isAuthenticated } = useAuth();
   const handleLogout = () => {
     logout();
+    closeMenu();
     navigate("/");
   };
   // Hide navbar on login and root routes
@@ -28,22 +36,36 @@ export default function StudentNavbar() {
         <Link
           to='/student/dashboard'
           className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
         >
           Dashboard
         </Link>
-        <Link to='/student/room' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/student/room'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Room
         </Link>
         <Link
           to='/student/complaints'
           className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
         >
           Complaints
         </Link>
-        <Link to='/student/leaves' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/student/leaves'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Leaves
         </Link>
-        <Link to='/student/fees' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/student/fees'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Fees
         </Link>
         <button

@@ -1,12 +1,18 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+function closeMenu() {
+  const menu = document.getElementById("admin-menu-toggle") as HTMLInputElement;
+  if (menu) menu.checked = false;
+}
+
 export default function AdminNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, isAuthenticated } = useAuth();
   const handleLogout = () => {
     logout();
+    closeMenu();
     navigate("/");
   };
   // Hide navbar on login and root routes
@@ -28,25 +34,43 @@ export default function AdminNavbar() {
         <Link
           to='/admin/dashboard'
           className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
         >
           Dashboard
         </Link>
-        <Link to='/admin/students' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/admin/students'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Students
         </Link>
-        <Link to='/admin/rooms' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/admin/rooms'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Rooms
         </Link>
         <Link
           to='/admin/complaints'
           className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
         >
           Complaints
         </Link>
-        <Link to='/admin/leaves' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/admin/leaves'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Leaves
         </Link>
-        <Link to='/admin/fees' className='hover:text-yellow-200 transition'>
+        <Link
+          to='/admin/fees'
+          className='hover:text-yellow-200 transition'
+          onClick={closeMenu}
+        >
           Fees
         </Link>
         <button
