@@ -59,7 +59,8 @@ export default function AdminLeaves() {
         Leave Applications
       </h1>
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
-        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm'>
+        {/* Table for desktop */}
+        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
               <th className='p-2 border-b'>Student</th>
@@ -130,6 +131,63 @@ export default function AdminLeaves() {
             )}
           </tbody>
         </table>
+        {/* Card layout for mobile */}
+        <div className='sm:hidden flex flex-col gap-4'>
+          {leaves.map((leave) => (
+            <div
+              key={leave.id}
+              className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+            >
+              <div className='flex justify-between mb-1'>
+                <span className='font-bold'>{leave.student.name}</span>
+                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                  {leave.student.rollNumber}
+                </span>
+              </div>
+              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>From:</span>
+                <span>{new Date(leave.fromDate).toLocaleDateString()}</span>
+                <span className='font-semibold'>To:</span>
+                <span>{new Date(leave.toDate).toLocaleDateString()}</span>
+                <span className='font-semibold'>Reason:</span>
+                <span>{leave.reason}</span>
+                <span className='font-semibold'>Status:</span>
+                <span>
+                  <span
+                    className={
+                      leave.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : leave.status === "APPROVED"
+                        ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+                        : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
+                    }
+                  >
+                    {leave.status}
+                  </span>
+                </span>
+              </div>
+              {leave.status === "PENDING" && (
+                <div className='flex gap-2 mt-2'>
+                  <button
+                    onClick={() => handleStatusUpdate(leave.id, "APPROVED")}
+                    className='bg-gradient-to-r from-green-500 to-green-700 text-white px-2 py-1 rounded shadow hover:from-green-600 hover:to-green-800 text-sm transition'
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleStatusUpdate(leave.id, "REJECTED")}
+                    className='bg-gradient-to-r from-red-500 to-red-700 text-white px-2 py-1 rounded shadow hover:from-red-600 hover:to-red-800 text-sm transition'
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {leaves.length === 0 && (
+            <div className='p-4 text-center'>No leave applications found.</div>
+          )}
+        </div>
       </div>
     </div>
   );
