@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../api/apiBase";
 
 interface Room {
   id: number;
@@ -30,7 +31,7 @@ export default function RoomDiagram() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/rooms");
+        const res = await axios.get(`${API_BASE}/rooms`);
         setRooms(res.data);
       } finally {
         setLoading(false);
