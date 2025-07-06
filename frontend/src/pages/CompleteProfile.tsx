@@ -1,7 +1,8 @@
-// src/pages/CompleteProfile.tsx
 import { useState } from "react";
 import axios from "axios";
 import { API_BASE } from "../api/apiBase";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function CompleteProfile() {
   const [form, setForm] = useState({
@@ -25,34 +26,33 @@ export default function CompleteProfile() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Not authenticated");
 
-      // Ensure year is sent as a number
       const payload = { ...form, year: Number(form.year) };
 
-      const res = await axios.post(
-        `${API_BASE}/students/profile`, // Change base URL if needed
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.post(`${API_BASE}/students/profile`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      alert("Profile created successfully");
-      console.log(res.data);
-      // Optionally redirect
-      window.location.href = "/student-dashboard";
+      toast.success("Profile completed successfully ✅", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        window.location.href = "/student/dashboard";
+      }, 2200);
     } catch (err: any) {
-      alert(err.response?.data?.error || "Something went wrong");
+      toast.error(err.response?.data?.error || "Something went wrong", {
+        position: "top-center",
+      });
     }
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className='max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md space-y-4'
+      className='max-w-md mx-auto mt-10 bg-white p-8 rounded-xl shadow-xl space-y-5 border border-gray-100'
     >
-      <h2 className='text-2xl font-semibold text-center text-gray-800'>
+      <h2 className='text-3xl font-bold text-center text-blue-700'>
         Complete Your Profile
       </h2>
 
@@ -110,7 +110,7 @@ export default function CompleteProfile() {
 
       <button
         type='submit'
-        className='w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition'
+        className='w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition'
       >
         Submit
       </button>
