@@ -36,7 +36,7 @@ export default function Login() {
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gray-100 px-2 sm:px-4'>
+    <div className='min-h-screen flex items-center justify-center bg-gray-100 px-2 sm:px-4 overflow-x-hidden'>
       <div className='w-full max-w-4xl bg-white shadow-xl rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2'>
         {/* Left Panel */}
         <div className='bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-6 sm:p-10 flex flex-col justify-between min-h-[220px]'>
