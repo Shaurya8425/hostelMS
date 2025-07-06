@@ -325,14 +325,18 @@ export default function AdminStudents() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
-        {/* Table for desktop */}
-        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm hidden sm:table'>
+      <div className='w-full overflow-x-auto bg-white rounded-xl shadow border p-1 sm:p-4'>
+        {/* Table for desktop and tablets */}
+        <table className='min-w-[900px] w-full border-separate border-spacing-y-2 text-left text-xs md:text-sm hidden md:table'>
           <thead className='bg-blue-50'>
             <tr>
               <th className='p-2 border-b'>Name</th>
-              <th className='p-2 border-b'>Email</th>
-              <th className='p-2 border-b'>Roll No</th>
+              <th className='p-2 border-b w-48 min-w-[10rem] max-w-[16rem]'>
+                Email
+              </th>
+              <th className='p-2 border-b w-32 min-w-[6rem] max-w-[8rem]'>
+                Roll No
+              </th>
               <th className='p-2 border-b'>Year</th>
               <th className='p-2 border-b'>Branch</th>
               <th className='p-2 border-b'>Division</th>
@@ -348,121 +352,134 @@ export default function AdminStudents() {
               <tr key={s.id} className='hover:bg-blue-50 rounded-lg transition'>
                 {editId === s.id ? (
                   <>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='text'
                         name='name'
                         value={editForm.name}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border w-48 min-w-[10rem] max-w-[16rem]'>
                       <input
                         type='email'
                         name='email'
                         value={editForm.email}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border w-32 min-w-[6rem] max-w-[8rem]'>
                       <input
                         type='text'
                         name='rollNumber'
                         value={editForm.rollNumber}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='number'
                         name='year'
                         value={editForm.year}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='text'
                         name='branch'
                         value={editForm.branch}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='text'
                         name='division'
                         value={editForm.division}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='text'
                         name='course'
                         value={editForm.course}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='date'
                         name='fromDate'
                         value={editForm.fromDate}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <input
                         type='date'
                         name='toDate'
                         value={editForm.toDate}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border'>
+                    <td className='p-2 border min-w-0'>
                       <select
                         name='linenIssued'
                         value={editForm.linenIssued}
                         onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full'
+                        className='p-1 border rounded w-full min-w-0 max-w-xs'
                       >
                         <option value='Y'>Y</option>
                         <option value='NA'>N/A</option>
                       </select>
                     </td>
-                    <td className='p-2 border space-x-2'>
-                      <button
-                        className='text-green-600 mr-2'
-                        onClick={() => handleEditSave(s.id)}
-                        type='button'
-                      >
-                        Save
-                      </button>
-                      <button
-                        className='text-gray-600'
-                        onClick={handleEditCancel}
-                        type='button'
-                      >
-                        Cancel
-                      </button>
+                    <td className='p-2 border space-x-2 min-w-0'>
+                      <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                        <button
+                          className='text-green-600 border border-green-600 px-2 py-1 rounded'
+                          onClick={() => handleEditSave(s.id)}
+                          type='button'
+                        >
+                          Save
+                        </button>
+                        <button
+                          className='text-gray-600 border border-gray-400 px-2 py-1 rounded'
+                          onClick={handleEditCancel}
+                          type='button'
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </td>
                   </>
                 ) : (
                   <>
                     <td className='p-2'>{s.name}</td>
-                    <td className='p-2'>{s.email}</td>
-                    <td className='p-2'>
-                      <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                    <td
+                      className='p-2 w-48 min-w-[10rem] max-w-[16rem] truncate'
+                      title={s.email}
+                    >
+                      {s.email}
+                    </td>
+                    <td
+                      className='p-2 w-32 min-w-[6rem] max-w-[8rem] truncate'
+                      title={s.rollNumber}
+                    >
+                      <span
+                        className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm truncate w-full inline-block'
+                        title={s.rollNumber}
+                      >
                         {s.rollNumber}
                       </span>
                     </td>
@@ -480,20 +497,22 @@ export default function AdminStudents() {
                     </td>
                     <td className='p-2'>{s.linenIssued}</td>
                     <td className='p-2 space-x-2'>
-                      <button
-                        className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold mr-2'
-                        onClick={() => handleEditClick(s)}
-                        type='button'
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
-                        onClick={() => handleDeleteClick(s.id)}
-                        type='button'
-                      >
-                        Delete
-                      </button>
+                      <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                        <button
+                          className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold mr-2'
+                          onClick={() => handleEditClick(s)}
+                          type='button'
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
+                          onClick={() => handleDeleteClick(s.id)}
+                          type='button'
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </>
                 )}
@@ -508,57 +527,177 @@ export default function AdminStudents() {
             )}
           </tbody>
         </table>
-        {/* Card layout for mobile */}
-        <div className='sm:hidden flex flex-col gap-4'>
+        {/* Card layout for mobile and small screens */}
+        <div className='md:hidden flex flex-col gap-4'>
           {students.map((s) => (
             <div
               key={s.id}
               className='bg-blue-50 rounded-lg shadow p-3 text-xs'
             >
-              <div className='flex justify-between mb-1'>
-                <span className='font-bold'>{s.name}</span>
-                <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
-                  {s.rollNumber}
-                </span>
-              </div>
-              <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
-                <span className='font-semibold'>Email:</span>
-                <span>{s.email}</span>
-                <span className='font-semibold'>Year:</span>
-                <span>{s.year}</span>
-                <span className='font-semibold'>Branch:</span>
-                <span>{s.branch}</span>
-                <span className='font-semibold'>Division:</span>
-                <span>{s.division}</span>
-                <span className='font-semibold'>Course:</span>
-                <span>{s.course}</span>
-                <span className='font-semibold'>From:</span>
-                <span>
-                  {s.fromDate ? new Date(s.fromDate).toLocaleDateString() : ""}
-                </span>
-                <span className='font-semibold'>To:</span>
-                <span>
-                  {s.toDate ? new Date(s.toDate).toLocaleDateString() : ""}
-                </span>
-                <span className='font-semibold'>Linen Issued:</span>
-                <span>{s.linenIssued}</span>
-              </div>
-              <div className='flex gap-2 mt-2'>
-                <button
-                  className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
-                  onClick={() => handleEditClick(s)}
-                  type='button'
-                >
-                  Edit
-                </button>
-                <button
-                  className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
-                  onClick={() => handleDeleteClick(s.id)}
-                  type='button'
-                >
-                  Delete
-                </button>
-              </div>
+              {editId === s.id ? (
+                <>
+                  <div className='flex justify-between mb-1'>
+                    <input
+                      type='text'
+                      name='name'
+                      value={editForm.name}
+                      onChange={handleEditFormChange}
+                      className='font-bold p-1 border rounded w-1/2 mr-2'
+                    />
+                    <input
+                      type='text'
+                      name='rollNumber'
+                      value={editForm.rollNumber}
+                      onChange={handleEditFormChange}
+                      className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm p-1 border w-1/2'
+                    />
+                  </div>
+                  <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                    <span className='font-semibold'>Email:</span>
+                    <input
+                      type='email'
+                      name='email'
+                      value={editForm.email}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>Year:</span>
+                    <input
+                      type='number'
+                      name='year'
+                      value={editForm.year}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>Branch:</span>
+                    <input
+                      type='text'
+                      name='branch'
+                      value={editForm.branch}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>Division:</span>
+                    <input
+                      type='text'
+                      name='division'
+                      value={editForm.division}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>Course:</span>
+                    <input
+                      type='text'
+                      name='course'
+                      value={editForm.course}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>From:</span>
+                    <input
+                      type='date'
+                      name='fromDate'
+                      value={editForm.fromDate}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>To:</span>
+                    <input
+                      type='date'
+                      name='toDate'
+                      value={editForm.toDate}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    />
+                    <span className='font-semibold'>Gender:</span>
+                    <select
+                      name='gender'
+                      value={editForm.gender}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    >
+                      <option value='MALE'>Male</option>
+                      <option value='FEMALE'>Female</option>
+                      <option value='OTHER'>Other</option>
+                    </select>
+                    <span className='font-semibold'>Linen Issued:</span>
+                    <select
+                      name='linenIssued'
+                      value={editForm.linenIssued}
+                      onChange={handleEditFormChange}
+                      className='p-1 border rounded w-full'
+                    >
+                      <option value='Y'>Y</option>
+                      <option value='NA'>N/A</option>
+                    </select>
+                  </div>
+                  <div className='flex gap-2 mt-2'>
+                    <button
+                      className='text-green-600 mr-2 border border-green-600 px-2 py-1 rounded'
+                      onClick={() => handleEditSave(s.id)}
+                      type='button'
+                    >
+                      Save
+                    </button>
+                    <button
+                      className='text-gray-600 border border-gray-400 px-2 py-1 rounded'
+                      onClick={handleEditCancel}
+                      type='button'
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className='flex justify-between mb-1'>
+                    <span className='font-bold'>{s.name}</span>
+                    <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
+                      {s.rollNumber}
+                    </span>
+                  </div>
+                  <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                    <span className='font-semibold'>Email:</span>
+                    <span>{s.email}</span>
+                    <span className='font-semibold'>Year:</span>
+                    <span>{s.year}</span>
+                    <span className='font-semibold'>Branch:</span>
+                    <span>{s.branch}</span>
+                    <span className='font-semibold'>Division:</span>
+                    <span>{s.division}</span>
+                    <span className='font-semibold'>Course:</span>
+                    <span>{s.course}</span>
+                    <span className='font-semibold'>From:</span>
+                    <span>
+                      {s.fromDate
+                        ? new Date(s.fromDate).toLocaleDateString()
+                        : ""}
+                    </span>
+                    <span className='font-semibold'>To:</span>
+                    <span>
+                      {s.toDate ? new Date(s.toDate).toLocaleDateString() : ""}
+                    </span>
+                    <span className='font-semibold'>Linen Issued:</span>
+                    <span>{s.linenIssued}</span>
+                  </div>
+                  <div className='flex gap-2 mt-2'>
+                    <button
+                      className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
+                      onClick={() => handleEditClick(s)}
+                      type='button'
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
+                      onClick={() => handleDeleteClick(s.id)}
+                      type='button'
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
           {students.length === 0 && (
