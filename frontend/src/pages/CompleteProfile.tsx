@@ -1,6 +1,7 @@
 // src/pages/CompleteProfile.tsx
 import { useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../api/apiBase";
 
 export default function CompleteProfile() {
   const [form, setForm] = useState({
@@ -28,7 +29,7 @@ export default function CompleteProfile() {
       const payload = { ...form, year: Number(form.year) };
 
       const res = await axios.post(
-        "http://localhost:3000/students/profile", // Change base URL if needed
+        `${API_BASE}/students/profile`, // Change base URL if needed
         payload,
         {
           headers: {

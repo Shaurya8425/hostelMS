@@ -3,17 +3,18 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import RoomDiagram from "../components/RoomDiagram";
 import Spinner from "../components/Spinner";
+import { API_BASE } from "../api/apiBase";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>({});
 
   const fetchStats = async () => {
     const [students, rooms, leaves, complaints, payments] = await Promise.all([
-      axios.get("http://localhost:3000/students"),
-      axios.get("http://localhost:3000/rooms"),
-      axios.get("http://localhost:3000/leaves"),
-      axios.get("http://localhost:3000/complaints"),
-      axios.get("http://localhost:3000/payments"),
+      axios.get(`${API_BASE}/students`),
+      axios.get(`${API_BASE}/rooms`),
+      axios.get(`${API_BASE}/leaves`),
+      axios.get(`${API_BASE}/complaints`),
+      axios.get(`${API_BASE}/payments`),
     ]);
 
     setStats({

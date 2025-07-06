@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import SkeletonDashboard from "../components/SkeletonDashboard";
+import { API_BASE } from "../api/apiBase";
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null);
@@ -14,7 +15,7 @@ export default function StudentDashboard() {
       if (!token) return;
       try {
         // Get user info
-        const res = await axios.get("http://localhost:3000/auth/me", {
+        const res = await axios.get(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { user } = res.data;
@@ -26,7 +27,7 @@ export default function StudentDashboard() {
         // Get student profile (with room, complaints, leaves, payments)
         console.log("Requesting /students/" + user.studentId);
         const studentRes = await axios.get(
-          `http://localhost:3000/students/${user.studentId}`,
+          `${API_BASE}/students/${user.studentId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         // Robustly handle both { data: student } and student object

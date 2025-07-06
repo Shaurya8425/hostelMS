@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { API_BASE } from "../../api/apiBase";
 
 interface Complaint {
   id: number;
@@ -21,7 +22,7 @@ export default function AdminComplaints() {
 
   const fetchComplaints = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/complaints", {
+      const res = await axios.get(`${API_BASE}/complaints`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setComplaints(res.data.data);
@@ -36,7 +37,7 @@ export default function AdminComplaints() {
   ) => {
     try {
       await axios.patch(
-        `http://localhost:3000/complaints/${id}/status`,
+        `${API_BASE}/complaints/${id}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );

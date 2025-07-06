@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import SkeletonLeave from "../components/SkeletonLeave";
+import { API_BASE } from "../api/apiBase";
 
 export default function Leave() {
   const [form, setForm] = useState({
@@ -22,7 +23,7 @@ export default function Leave() {
       setStudentId(id);
     } else if (token) {
       axios
-        .get("http://localhost:3000/auth/me", {
+        .get(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
@@ -37,7 +38,7 @@ export default function Leave() {
 
   const fetchLeaves = async (sid?: number) => {
     try {
-      const res = await axios.get("http://localhost:3000/leaves", {
+      const res = await axios.get(`${API_BASE}/leaves`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Filter leaves for this student
@@ -59,7 +60,7 @@ export default function Leave() {
     try {
       if (!studentId) throw new Error("Student ID not found");
       await axios.post(
-        "http://localhost:3000/leaves",
+        `${API_BASE}/leaves`,
         { ...form, studentId },
         {
           headers: { Authorization: `Bearer ${token}` },

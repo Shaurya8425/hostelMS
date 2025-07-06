@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { API_BASE } from "../../api/apiBase";
 
 interface Student {
   id: number;
@@ -60,7 +61,7 @@ export default function AdminStudents() {
   const fetchStudents = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/students?search=${search}&page=${page}`,
+        `${API_BASE}/students?search=${search}&page=${page}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -82,7 +83,7 @@ export default function AdminStudents() {
     try {
       // Ensure year is sent as a number
       const payload = { ...form, year: Number(form.year) };
-      await axios.post("http://localhost:3000/students", payload, {
+      await axios.post(`${API_BASE}/students`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Student added successfully");
@@ -141,7 +142,7 @@ export default function AdminStudents() {
   const handleEditSave = async (id: number) => {
     try {
       const payload = { ...editForm, year: Number(editForm.year) };
-      await axios.put(`http://localhost:3000/students/${id}`, payload, {
+      await axios.put(`${API_BASE}/students/${id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Student updated successfully");
@@ -164,7 +165,7 @@ export default function AdminStudents() {
   const handleDeleteConfirm = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:3000/students/${deleteId}`, {
+      await axios.delete(`${API_BASE}/students/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Student deleted");

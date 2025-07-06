@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { API_BASE } from "../../api/apiBase";
 
 interface Leave {
   id: number;
@@ -22,7 +23,7 @@ export default function AdminLeaves() {
 
   const fetchLeaves = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/leaves", {
+      const res = await axios.get(`${API_BASE}/leaves`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setLeaves(res.data.data);
@@ -41,7 +42,7 @@ export default function AdminLeaves() {
   ) => {
     try {
       await axios.patch(
-        `http://localhost:3000/leaves/${id}/status`,
+        `${API_BASE}/leaves/${id}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );

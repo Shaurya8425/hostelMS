@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { API_BASE } from "../../api/apiBase";
 
 interface Room {
   id: number;
@@ -39,7 +40,7 @@ export default function AdminRooms() {
 
   const fetchRooms = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/rooms", {
+      const res = await axios.get(`${API_BASE}/rooms`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRooms(res.data);
@@ -51,7 +52,7 @@ export default function AdminRooms() {
   // Fetch students for assignment
   const fetchStudents = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/students", {
+      const res = await axios.get(`${API_BASE}/students`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Use the correct array from the paginated response
@@ -80,7 +81,7 @@ export default function AdminRooms() {
         floor: Number(form.floor),
         designation: form.designation || null,
       };
-      await axios.post("http://localhost:3000/rooms", payload, {
+      await axios.post(`${API_BASE}/rooms`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Room created");
@@ -102,7 +103,7 @@ export default function AdminRooms() {
     e.preventDefault();
     try {
       await axios.put(
-        "http://localhost:3000/rooms/assign",
+        `${API_BASE}/rooms/assign`,
         {
           studentId: Number(assignForm.studentId),
           roomId: Number(assignForm.roomId),

@@ -1,6 +1,5 @@
 import axios from "axios";
-
-const API_BASE = "http://localhost:3000";
+import { API_BASE } from "./apiBase";
 
 export const fileComplaint = async ({
   subject,

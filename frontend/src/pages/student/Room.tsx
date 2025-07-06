@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import SkeletonRoom from "../../components/SkeletonRoom";
+import { API_BASE } from "../../api/apiBase";
 
 type Room = {
   id: number;
@@ -29,7 +30,7 @@ export default function StudentRoom() {
       setStudentId(id);
     } else if (token) {
       axios
-        .get("http://localhost:3000/auth/me", {
+        .get(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
@@ -45,7 +46,7 @@ export default function StudentRoom() {
   const fetchRooms = async (sid?: number) => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:3000/rooms");
+      const res = await axios.get(`${API_BASE}/rooms`);
       const allRooms = res.data as Room[];
       const id = sid || studentId;
       const roomWithStudent = allRooms.find((room) =>
@@ -64,7 +65,7 @@ export default function StudentRoom() {
     try {
       if (!studentId) throw new Error("Student ID not found");
       await axios.put(
-        "http://localhost:3000/rooms/assign",
+        `${API_BASE}/rooms/assign`,
         { studentId, roomId },
         { headers: { Authorization: `Bearer ${token}` } }
       );

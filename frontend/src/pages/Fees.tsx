@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import SkeletonFees from "../components/SkeletonFees";
+import { API_BASE } from "../api/apiBase";
 
 type FeePayment = {
   id: number;
@@ -22,7 +23,7 @@ export default function Fees() {
   useEffect(() => {
     const fetchStudentId = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/auth/me", {
+        const res = await axios.get(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const id = res.data?.user?.studentId;
@@ -37,12 +38,9 @@ export default function Fees() {
 
   const fetchFees = async (id: number) => {
     try {
-      const res = await axios.get(
-        `http://localhost:3000/payments/student/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axios.get(`${API_BASE}/payments/student/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setFees(Array.isArray(res.data.data) ? res.data.data : []);
     } catch (err) {
       setFees([]); // fallback to empty array on error

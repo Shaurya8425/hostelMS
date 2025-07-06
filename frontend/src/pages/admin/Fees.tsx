@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { API_BASE } from "../../api/apiBase";
 
 interface Fee {
   id: number;
@@ -27,7 +28,7 @@ export default function AdminFees() {
 
   const fetchFees = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/payments", {
+      const res = await axios.get(`${API_BASE}/payments`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFees(res.data.data);
@@ -52,7 +53,7 @@ export default function AdminFees() {
         amount: Number(form.amount),
         dueDate: form.dueDate,
       };
-      await axios.post("http://localhost:3000/payments", payload, {
+      await axios.post(`${API_BASE}/payments`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Fee record added");
@@ -68,7 +69,7 @@ export default function AdminFees() {
     const paidAt = new Date().toISOString();
     try {
       await axios.patch(
-        `http://localhost:3000/payments/${id}/pay`,
+        `${API_BASE}/payments/${id}/pay`,
         { paidAt },
         { headers: { Authorization: `Bearer ${token}` } }
       );
