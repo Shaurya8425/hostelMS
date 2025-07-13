@@ -31,7 +31,20 @@ studentRoute.post("/", async (c) => {
     );
   }
 
-  const { name, email, phone, branch, year, rollNumber, gender } = result.data;
+  const {
+    name,
+    email,
+    phone,
+    branch,
+    year,
+    rollNumber,
+    gender,
+    division,
+    course,
+    fromDate,
+    toDate,
+    linenIssued,
+  } = result.data;
 
   try {
     const student = await prisma.student.create({
@@ -43,6 +56,11 @@ studentRoute.post("/", async (c) => {
         year,
         rollNumber,
         gender,
+        division,
+        course,
+        fromDate,
+        toDate,
+        linenIssued,
         user: {
           create: {
             email,
@@ -81,6 +99,11 @@ studentRoute.post(
       year: z.number(),
       rollNumber: z.string(),
       gender: z.enum(["MALE", "FEMALE", "OTHER"]),
+      division: z.string().optional().nullable(),
+      course: z.string().optional().nullable(),
+      fromDate: z.coerce.date().optional().nullable(),
+      toDate: z.coerce.date().optional().nullable(),
+      linenIssued: z.enum(["Y", "NA"]).optional(),
     })
   ),
   async (c) => {

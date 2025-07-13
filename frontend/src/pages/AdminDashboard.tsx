@@ -70,9 +70,9 @@ export default function AdminDashboard() {
             <h2 className='text-lg font-semibold text-white mb-2 tracking-wide text-center break-words'>
               {card.title}
             </h2>
-            <p className='text-4xl font-extrabold text-white drop-shadow-lg text-center'>
+            <div className='text-4xl font-extrabold text-white drop-shadow-lg text-center'>
               {card.count ?? <Spinner />}
-            </p>
+            </div>
           </div>
         ))}
       </div>

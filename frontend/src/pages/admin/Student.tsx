@@ -82,7 +82,15 @@ export default function AdminStudents() {
     e.preventDefault();
     try {
       // Ensure year is sent as a number
-      const payload = { ...form, year: Number(form.year) };
+      const payload = {
+        ...form,
+        year: Number(form.year),
+        division: form.division || null,
+        course: form.course || null,
+        fromDate: form.fromDate || null,
+        toDate: form.toDate || null,
+        linenIssued: form.linenIssued || null,
+      };
       await axios.post(`${API_BASE}/students`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
