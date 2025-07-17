@@ -19,38 +19,35 @@ type Room = {
 export default function StudentRoom() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [studentId, setStudentId] = useState<number | null>(null);
+  const [studentEmail, setStudentEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token") || "";
 
-  // Fetch studentId from /auth/me or localStorage
+  // Fetch student email from /auth/me
   useEffect(() => {
-    let id = Number(localStorage.getItem("studentId"));
-    if (id && id > 0) {
-      setStudentId(id);
-    } else if (token) {
+    if (token) {
       axios
         .get(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
           const user = res.data.user;
-          if (user && user.studentId) {
-            setStudentId(user.studentId);
-            localStorage.setItem("studentId", user.studentId.toString());
+          if (user && user.email) {
+            setStudentEmail(user.email);
           }
         });
     }
   }, [token]);
 
-  const fetchRooms = async (sid?: number) => {
+  const fetchRooms = async (email?: string) => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE}/rooms`);
       const allRooms = res.data as Room[];
-      const id = sid || studentId;
+      const mail = email || studentEmail;
+      // Find the room where a student with this email exists
       const roomWithStudent = allRooms.find((room) =>
-        room.students.some((s) => s.id === id)
+        room.students.some((s: any) => s.email === mail)
       );
       setRooms(allRooms);
       setCurrentRoom(roomWithStudent || null);
@@ -63,22 +60,22 @@ export default function StudentRoom() {
 
   const handleAssign = async (roomId: number) => {
     try {
-      if (!studentId) throw new Error("Student ID not found");
+      if (!studentEmail) throw new Error("Student email not found");
       await axios.put(
         `${API_BASE}/rooms/assign`,
-        { studentId, roomId },
+        { studentEmail, roomId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Room assigned successfully");
-      fetchRooms(studentId); // Refresh room data
+      fetchRooms(studentEmail); // Refresh room data
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to assign room");
     }
   };
 
   useEffect(() => {
-    if (studentId) fetchRooms(studentId);
-  }, [studentId]);
+    if (studentEmail) fetchRooms(studentEmail);
+  }, [studentEmail]);
 
   if (loading) return <SkeletonRoom />;
 
@@ -107,8 +104,8 @@ export default function StudentRoom() {
             <div className='sm:col-span-2'>
               <span className='font-semibold'>Roommates:</span>{" "}
               {currentRoom.students
-                .filter((s) => s.id !== studentId)
-                .map((s) => `${s.name} (${s.rollNumber})`)
+                .filter((s: any) => s.email !== studentEmail)
+                .map((s: any) => `${s.name} (${s.rollNumber})`)
                 .join(", ") || (
                 <span className='text-gray-500 italic'>No roommates yet</span>
               )}

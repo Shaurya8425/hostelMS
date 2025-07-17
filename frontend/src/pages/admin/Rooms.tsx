@@ -3,6 +3,18 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE } from "../../api/apiBase";
 
+interface Student {
+  id: number;
+  name: string;
+  rollNumber: string;
+  email: string;
+}
+
+interface AssignForm {
+  studentEmail: string;
+  roomId: string;
+}
+
 interface Room {
   id: number;
   roomNumber: string;
@@ -26,16 +38,13 @@ export default function AdminRooms() {
     floor: 0,
     designation: "",
     capacity: 1,
-    status: "AVAILABLE",
+    status: "AVAILABLE" as Room["status"],
   });
-  const [assignForm, setAssignForm] = useState({ studentId: "", roomId: "" });
-  const [students, setStudents] = useState<
-    {
-      id: number;
-      name: string;
-      rollNumber: string;
-    }[]
-  >([]);
+  const [assignForm, setAssignForm] = useState<AssignForm>({
+    studentEmail: "",
+    roomId: "",
+  });
+  const [students, setStudents] = useState<Student[]>([]);
   const token = localStorage.getItem("token");
 
   const fetchRooms = async () => {
@@ -49,20 +58,18 @@ export default function AdminRooms() {
     }
   };
 
-  // Fetch students for assignment
   const fetchStudents = async () => {
     try {
       const res = await axios.get(`${API_BASE}/students`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Use the correct array from the paginated response
       if (Array.isArray(res.data.data)) {
         setStudents(res.data.data);
       } else {
         setStudents([]);
       }
     } catch (err) {
-      setStudents([]); // fallback to empty array on error
+      setStudents([]);
       toast.error("Failed to fetch students");
     }
   };
@@ -105,7 +112,7 @@ export default function AdminRooms() {
       await axios.put(
         `${API_BASE}/rooms/assign`,
         {
-          studentId: Number(assignForm.studentId),
+          studentEmail: assignForm.studentEmail,
           roomId: Number(assignForm.roomId),
         },
         {
@@ -113,7 +120,7 @@ export default function AdminRooms() {
         }
       );
       toast.success("Student assigned to room");
-      setAssignForm({ studentId: "", roomId: "" });
+      setAssignForm({ studentEmail: "", roomId: "" });
       fetchRooms();
     } catch (err: any) {
       toast.error(
@@ -215,10 +222,10 @@ export default function AdminRooms() {
             Assign Student to Room
           </h2>
           <select
-            name='studentId'
-            value={assignForm.studentId}
+            name='studentEmail'
+            value={assignForm.studentEmail}
             onChange={(e) =>
-              setAssignForm({ ...assignForm, studentId: e.target.value })
+              setAssignForm({ ...assignForm, studentEmail: e.target.value })
             }
             className='w-full p-2 border rounded'
             required
@@ -226,7 +233,7 @@ export default function AdminRooms() {
             <option value=''>Select Student</option>
             {Array.isArray(students) &&
               students.map((s) => (
-                <option key={s.id} value={s.id}>
+                <option key={s.id} value={s.email}>
                   {s.name} ({s.rollNumber})
                 </option>
               ))}

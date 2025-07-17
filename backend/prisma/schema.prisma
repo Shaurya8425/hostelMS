@@ -116,5 +116,13 @@ enum RoomStatus {
 enum LinenStatus {
   BEDSHEET
   PILLOW_COVER
+  Y
   NA
+}
+
+model LinenInventory {
+  id          Int      @id @default(autoincrement())
+  bedsheet    Int      @default(0)
+  pillowCover Int      @default(0)
+  updatedAt   DateTime @updatedAt
 }

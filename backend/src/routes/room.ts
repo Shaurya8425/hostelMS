@@ -3,7 +3,6 @@ import { Hono } from "hono";
 import prisma from "../db";
 import { roomSchema } from "../schemas/roomSchema";
 
-
 const roomRoute = new Hono();
 
 // ✅ Create Room
@@ -35,7 +34,7 @@ roomRoute.get("/", async (c) => {
 
 // ✅ Assign student to room
 roomRoute.put("/assign", async (c) => {
-  const { studentId, roomId } = await c.req.json();
+  const { studentEmail, roomId } = await c.req.json();
 
   // Check if room exists
   const room = await prisma.room.findUnique({ where: { id: roomId } });
@@ -50,10 +49,10 @@ roomRoute.put("/assign", async (c) => {
     return c.json({ error: "Room is full" }, 400);
   }
 
-  // Update student with new roomId
+  // Update student with new roomId using email
   try {
     const updatedStudent = await prisma.student.update({
-      where: { id: studentId },
+      where: { email: studentEmail },
       data: { roomId },
     });
 

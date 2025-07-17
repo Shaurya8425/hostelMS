@@ -4,9 +4,11 @@ import axios from "axios";
 import RoomDiagram from "../components/RoomDiagram";
 import Spinner from "../components/Spinner";
 import { API_BASE } from "../api/apiBase";
+import { getLinenInventory } from "../api/linenApi";
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const [stats, setStats] = useState<any>({});
+  const [linen, setLinen] = useState<{ bedsheet: number; pillowCover: number } | null>(null);
 
   const fetchStats = async () => {
     const [students, rooms, leaves, complaints] = await Promise.all([
@@ -22,6 +24,14 @@ export default function AdminDashboard() {
       leaves: leaves.data.data.length,
       complaints: complaints.data.data.length,
     });
+
+    // Fetch linen inventory
+    try {
+      const linenData = await getLinenInventory();
+      setLinen(linenData);
+    } catch (e) {
+      setLinen(null);
+    }
   };
 
   useEffect(() => {
@@ -33,7 +43,7 @@ export default function AdminDashboard() {
       <h1 className='text-4xl font-extrabold mb-8 text-blue-900'>
         Admin Dashboard
       </h1>
-      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-10'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-10'>
         {[
           {
             title: "Total Students",
@@ -54,6 +64,16 @@ export default function AdminDashboard() {
             title: "Complaints",
             count: stats.complaints,
             color: "from-red-500 to-red-700",
+          },
+          {
+            title: "Bedsheets Available",
+            count: linen ? linen.bedsheet : <Spinner />, // new
+            color: "from-purple-500 to-purple-700",
+          },
+          {
+            title: "Pillow Covers Available",
+            count: linen ? linen.pillowCover : <Spinner />, // new
+            color: "from-pink-500 to-pink-700",
           },
         ].map((card) => (
           <div
@@ -78,3 +98,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+export default AdminDashboard;

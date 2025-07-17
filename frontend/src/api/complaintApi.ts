@@ -4,16 +4,16 @@ import { API_BASE } from "./apiBase";
 export const fileComplaint = async ({
   subject,
   description,
-  studentId,
+  studentEmail,
 }: {
   subject: string;
   description: string;
-  studentId: number;
+  studentEmail: string;
 }) => {
   const token = localStorage.getItem("token");
   return axios.post(
     `${API_BASE}/complaints`,
-    { subject, description, studentId },
+    { subject, description, studentEmail },
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -22,9 +22,9 @@ export const fileComplaint = async ({
   );
 };
 
-export const getStudentComplaints = async (studentId: number) => {
+export const getStudentComplaints = async (studentEmail: string) => {
   const token = localStorage.getItem("token");
-  return axios.get(`${API_BASE}/complaints/student/${studentId}`, {
+  return axios.get(`${API_BASE}/complaints/student/${studentEmail}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

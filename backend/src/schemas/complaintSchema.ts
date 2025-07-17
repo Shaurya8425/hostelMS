@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createComplaintSchema = z.object({
   subject: z.string().min(3),
   description: z.string().min(5),
-  studentId: z.number(),
+  studentEmail: z.string().email(),
 });
 
 export const updateComplaintStatusSchema = z.object({

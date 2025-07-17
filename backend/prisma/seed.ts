@@ -2,6 +2,11 @@ import prisma from "../src/db";
 import { hash } from "bcryptjs";
 
 async function main() {
+  // Add linen inventory for testing
+  await prisma.linenInventory.deleteMany();
+  await prisma.linenInventory.create({
+    data: { bedsheet: 10, pillowCover: 8 },
+  });
   // Delete all data first to avoid unique constraint errors
   // removed feePayment deleteMany
   // await prisma.complaint.deleteMany({});

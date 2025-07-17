@@ -8,7 +8,7 @@ import { API_BASE } from "../api/apiBase";
 
 export default function Complaint() {
   const [complaints, setComplaints] = useState<any[]>([]);
-  const [studentId, setStudentId] = useState<number | null>(null);
+  const [studentEmail, setStudentEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,14 +21,14 @@ export default function Complaint() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { user } = res.data;
-        if (user.role === "STUDENT" && user.studentId === null) {
+        if (user.role === "STUDENT" && !user.email) {
           window.location.href = "/complete-profile";
           return;
         }
-        setStudentId(user.studentId);
+        setStudentEmail(user.email);
         // Fetch complaints for this student
-        if (user.studentId) {
-          const complaintsRes = await getStudentComplaints(user.studentId);
+        if (user.email) {
+          const complaintsRes = await getStudentComplaints(user.email);
           setComplaints(complaintsRes.data.data);
         }
       } catch (err) {
@@ -73,7 +73,7 @@ export default function Complaint() {
           File a Complaint
         </h2>
         <FileComplaint
-          studentId={studentId}
+          studentEmail={studentEmail}
           onComplaintFiled={handleComplaintFiled}
         />
       </section>

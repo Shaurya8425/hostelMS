@@ -10,6 +10,7 @@ import studentRoute from "./routes/student";
 import roomRoute from "./routes/room";
 import leaveRoute from "./routes/leave";
 import complaintRoute from "./routes/complaint";
+import linenRoute from "./routes/linen";
 // removed feeRoute import
 
 const app = new Hono();
@@ -26,6 +27,7 @@ app.route("/students", studentRoute);
 app.route("/rooms", roomRoute);
 app.route("/leaves", leaveRoute);
 app.route("/complaints", complaintRoute);
+app.route("/linen", linenRoute);
 // removed /payments feeRoute
 
 app.get("/", async (c) => {

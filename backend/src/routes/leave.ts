@@ -19,14 +19,22 @@ leaveRoute.post("/", async (c) => {
     );
   }
 
-  const { fromDate, toDate, reason, studentId } = result.data;
+  const { fromDate, toDate, reason, studentEmail } = result.data;
+
+  // Find student by email
+  const student = await prisma.student.findUnique({
+    where: { email: studentEmail },
+  });
+  if (!student) {
+    return c.json({ error: "Student not found" }, 404);
+  }
 
   const leave = await prisma.leave.create({
     data: {
       fromDate: new Date(fromDate),
       toDate: new Date(toDate),
       reason,
-      studentId,
+      studentId: student.id,
     },
   });
 
@@ -80,16 +88,22 @@ leaveRoute.patch("/:id/status", async (c) => {
   return c.json({ success: true, data: leave });
 });
 
-// GET /leaves/student/:id - Student views their leaves
-leaveRoute.get("/student/:id", async (c) => {
-  const id = Number(c.req.param("id"));
+// GET /leaves/student/:email - Student views their leaves
+leaveRoute.get("/student/:email", async (c) => {
+  const email = c.req.param("email");
+  // Find student by email
+  const student = await prisma.student.findUnique({
+    where: { email },
+  });
+  if (!student) {
+    return c.json({ error: "Student not found" }, 404);
+  }
   const leaves = await prisma.leave.findMany({
-    where: { studentId: id },
+    where: { studentId: student.id },
     orderBy: {
       fromDate: "desc",
     },
   });
-
   return c.json({ success: true, data: leaves });
 });
 

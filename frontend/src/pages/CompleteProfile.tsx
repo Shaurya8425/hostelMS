@@ -155,6 +155,7 @@ export default function CompleteProfile() {
             <option value='NA'>Not Issued</option>
             <option value='BEDSHEET'>Bedsheet</option>
             <option value='PILLOW_COVER'>Pillow Cover</option>
+            <option value='Y'>Both (Bedsheet & Pillow Cover)</option>
           </select>
         </div>
       </div>

@@ -12,38 +12,35 @@ export default function Leave() {
   });
 
   const [leaves, setLeaves] = useState([]);
-  const [studentId, setStudentId] = useState<number | null>(null);
+  const [studentEmail, setStudentEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    // Get studentId from localStorage or /auth/me
-    let id = Number(localStorage.getItem("studentId"));
-    if (id && id > 0) {
-      setStudentId(id);
-    } else if (token) {
+    if (token) {
       axios
         .get(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
           const user = res.data.user;
-          if (user && user.studentId) {
-            setStudentId(user.studentId);
-            localStorage.setItem("studentId", user.studentId.toString());
+          if (user && user.email) {
+            setStudentEmail(user.email);
           }
         });
     }
   }, [token]);
 
-  const fetchLeaves = async (sid?: number) => {
+  const fetchLeaves = async (email?: string) => {
     try {
       const res = await axios.get(`${API_BASE}/leaves`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Filter leaves for this student
-      const id = sid || studentId;
-      setLeaves(res.data.data.filter((leave: any) => leave.studentId === id));
+      const mail = email || studentEmail;
+      setLeaves(
+        res.data.data.filter((leave: any) => leave.student?.email === mail)
+      );
     } catch (err) {
       toast.error("Failed to fetch leaves");
     }
@@ -58,26 +55,27 @@ export default function Leave() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (!studentId) throw new Error("Student ID not found");
+      if (!studentEmail) throw new Error("Student email not found");
       await axios.post(
         `${API_BASE}/leaves`,
-        { ...form, studentId },
+        { ...form, studentEmail },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       toast.success("Leave Applied");
       setForm({ fromDate: "", toDate: "", reason: "" });
-      fetchLeaves(studentId);
+      fetchLeaves(studentEmail);
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Leave request failed");
     }
   };
 
   useEffect(() => {
-    if (studentId) fetchLeaves(studentId).finally(() => setLoading(false));
+    if (studentEmail)
+      fetchLeaves(studentEmail).finally(() => setLoading(false));
     // eslint-disable-next-line
-  }, [studentId]);
+  }, [studentEmail]);
 
   if (loading) return <SkeletonLeave />;
 
@@ -122,7 +120,7 @@ export default function Leave() {
         <button
           type='submit'
           className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
-          disabled={!studentId}
+          disabled={!studentEmail}
         >
           Submit
         </button>

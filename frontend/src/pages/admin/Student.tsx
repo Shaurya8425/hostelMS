@@ -273,6 +273,7 @@ export default function AdminStudents() {
           >
             <option value='BEDSHEET'>Bedsheet</option>
             <option value='PILLOW_COVER'>Pillow Cover</option>
+            <option value='Y'>Both (Bedsheet & Pillow Cover)</option>
             <option value='NA'>N/A</option>
           </select>
           <button
@@ -533,6 +534,7 @@ export default function AdminStudents() {
                     >
                       <option value='BEDSHEET'>Bedsheet</option>
                       <option value='PILLOW_COVER'>Pillow Cover</option>
+                      <option value='Y'>Both (Bedsheet & Pillow Cover)</option>
                       <option value='NA'>N/A</option>
                     </select>
                   </div>

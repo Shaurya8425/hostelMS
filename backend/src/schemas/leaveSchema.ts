@@ -9,7 +9,7 @@ export const createLeaveSchema = z.object({
     .string()
     .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid toDate" }),
   reason: z.string().min(3),
-  studentId: z.number(),
+  studentEmail: z.string().email(),
 });
 
 export const updateLeaveStatusSchema = z.object({

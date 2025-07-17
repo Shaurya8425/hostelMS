@@ -19,13 +19,20 @@ complaintRoute.post("/", async (c) => {
     );
   }
 
-  const { subject, description, studentId } = result.data;
+  const { subject, description, studentEmail } = result.data;
 
+  // Find student by email
+  const student = await prisma.student.findUnique({
+    where: { email: studentEmail },
+  });
+  if (!student) {
+    return c.json({ error: "Student not found" }, 404);
+  }
   const complaint = await prisma.complaint.create({
     data: {
       subject,
       description,
-      studentId,
+      studentId: student.id,
     },
   });
 
@@ -80,16 +87,22 @@ complaintRoute.patch("/:id/status", async (c) => {
   return c.json({ success: true, data: updated });
 });
 
-// GET /complaints/student/:id - Student views their own complaints
-complaintRoute.get("/student/:id", async (c) => {
-  const id = Number(c.req.param("id"));
+// GET /complaints/student/:email - Student views their own complaints
+complaintRoute.get("/student/:email", async (c) => {
+  const email = c.req.param("email");
+  // Find student by email
+  const student = await prisma.student.findUnique({
+    where: { email },
+  });
+  if (!student) {
+    return c.json({ error: "Student not found" }, 404);
+  }
   const complaints = await prisma.complaint.findMany({
-    where: { studentId: id },
+    where: { studentId: student.id },
     orderBy: {
       createdAt: "desc",
     },
   });
-
   return c.json({ success: true, data: complaints });
 });
 

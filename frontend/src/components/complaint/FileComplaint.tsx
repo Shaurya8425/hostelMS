@@ -3,10 +3,10 @@ import { fileComplaint } from "../../api/complaintApi";
 import { toast } from "react-toastify";
 
 export default function FileComplaint({
-  studentId,
+  studentEmail,
   onComplaintFiled,
 }: {
-  studentId: number | null;
+  studentEmail: string | null;
   onComplaintFiled: (complaint: any) => void;
 }) {
   const [subject, setSubject] = useState("");
@@ -23,8 +23,8 @@ export default function FileComplaint({
       return;
     }
     try {
-      if (!studentId) throw new Error("Student ID not found");
-      const res = await fileComplaint({ subject, description, studentId });
+      if (!studentEmail) throw new Error("Student email not found");
+      const res = await fileComplaint({ subject, description, studentEmail });
       toast.success("Complaint filed successfully!");
       setSubject("");
       setDescription("");
@@ -54,7 +54,7 @@ export default function FileComplaint({
       <button
         type='submit'
         className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
-        disabled={!studentId}
+        disabled={!studentEmail}
       >
         Submit Complaint
       </button>
