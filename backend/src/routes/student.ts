@@ -35,9 +35,6 @@ studentRoute.post("/", async (c) => {
     name,
     email,
     phone,
-    branch,
-    year,
-    rollNumber,
     gender,
     division,
     course,
@@ -47,14 +44,12 @@ studentRoute.post("/", async (c) => {
   } = result.data;
 
   try {
+    // Only send valid fields to Prisma
     const student = await prisma.student.create({
       data: {
         name,
         email,
         phone,
-        branch,
-        year,
-        rollNumber,
         gender,
         division,
         course,
@@ -95,15 +90,12 @@ studentRoute.post(
     z.object({
       name: z.string(),
       phone: z.string(),
-      branch: z.string(),
-      year: z.number(),
-      rollNumber: z.string(),
       gender: z.enum(["MALE", "FEMALE", "OTHER"]),
       division: z.string().optional().nullable(),
       course: z.string().optional().nullable(),
       fromDate: z.coerce.date().optional().nullable(),
       toDate: z.coerce.date().optional().nullable(),
-      linenIssued: z.enum(["Y", "NA"]).optional(),
+      linenIssued: z.enum(["BEDSHEET", "PILLOW_COVER", "NA"]).optional(),
     })
   ),
   async (c) => {
@@ -119,7 +111,14 @@ studentRoute.post(
     try {
       const student = await prisma.student.create({
         data: {
-          ...data,
+          name: data.name,
+          phone: data.phone,
+          gender: data.gender,
+          division: data.division,
+          course: data.course,
+          fromDate: data.fromDate,
+          toDate: data.toDate,
+          linenIssued: data.linenIssued,
           email: user.email,
           user: { connect: { id: user.id } },
         },
@@ -148,10 +147,7 @@ studentRoute.get("/", async (c) => {
   const [students, total] = await prisma.$transaction([
     prisma.student.findMany({
       where: {
-        OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { rollNumber: { contains: search, mode: "insensitive" as const } },
-        ],
+        OR: [{ name: { contains: search, mode: "insensitive" as const } }],
       },
       skip,
       take: limit,
@@ -159,15 +155,11 @@ studentRoute.get("/", async (c) => {
         room: true,
         complaints: true,
         leaves: true,
-        payments: true,
       },
     }),
     prisma.student.count({
       where: {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { rollNumber: { contains: search, mode: "insensitive" } },
-        ],
+        OR: [{ name: { contains: search, mode: "insensitive" } }],
       },
     }),
   ]);
@@ -189,7 +181,6 @@ studentRoute.get("/:id", async (c) => {
       room: true,
       complaints: true,
       leaves: true,
-      payments: true,
     },
   });
 

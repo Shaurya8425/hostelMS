@@ -66,13 +66,6 @@ export default function AdminNavbar() {
         >
           Leaves
         </Link>
-        <Link
-          to='/admin/fees'
-          className='hover:text-yellow-200 transition'
-          onClick={closeMenu}
-        >
-          Fees
-        </Link>
         <button
           onClick={handleLogout}
           className='mt-2 md:mt-0 px-4 py-1 font-bold rounded-full bg-white text-green-700 border-2 border-green-600 shadow hover:bg-green-50 hover:text-red-600 transition'

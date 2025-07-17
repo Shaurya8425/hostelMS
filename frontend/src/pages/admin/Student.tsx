@@ -8,15 +8,12 @@ interface Student {
   name: string;
   email: string;
   phone: string;
-  branch: string;
-  year: number;
-  rollNumber: string;
   gender: string;
   division?: string;
   course?: string;
   fromDate?: string;
   toDate?: string;
-  linenIssued?: "Y" | "NA";
+  linenIssued?: "BEDSHEET" | "PILLOW_COVER" | "NA";
 }
 
 export default function AdminStudents() {
@@ -29,30 +26,24 @@ export default function AdminStudents() {
     name: "",
     email: "",
     phone: "",
-    branch: "",
-    year: 1,
-    rollNumber: "",
     gender: "MALE",
     division: "",
     course: "",
     fromDate: "",
     toDate: "",
-    linenIssued: "Y",
+    linenIssued: "BEDSHEET",
   });
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
     phone: "",
-    branch: "",
-    year: 1,
-    rollNumber: "",
     gender: "MALE",
     division: "",
     course: "",
     fromDate: "",
     toDate: "",
-    linenIssued: "Y",
+    linenIssued: "BEDSHEET",
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -84,7 +75,6 @@ export default function AdminStudents() {
       // Ensure year is sent as a number
       const payload = {
         ...form,
-        year: Number(form.year),
         division: form.division || null,
         course: form.course || null,
         fromDate: form.fromDate || null,
@@ -101,15 +91,12 @@ export default function AdminStudents() {
         name: "",
         email: "",
         phone: "",
-        branch: "",
-        year: 1,
-        rollNumber: "",
         gender: "MALE",
         division: "",
         course: "",
         fromDate: "",
         toDate: "",
-        linenIssued: "Y",
+        linenIssued: "BEDSHEET",
       });
     } catch (err) {
       toast.error("Failed to add student");
@@ -129,15 +116,12 @@ export default function AdminStudents() {
       name: student.name,
       email: student.email,
       phone: student.phone,
-      branch: student.branch,
-      year: student.year,
-      rollNumber: student.rollNumber,
       gender: student.gender,
       division: student.division || "",
       course: student.course || "",
       fromDate: student.fromDate || "",
       toDate: student.toDate || "",
-      linenIssued: student.linenIssued || "Y",
+      linenIssued: student.linenIssued || "BEDSHEET",
     });
   };
 
@@ -149,7 +133,7 @@ export default function AdminStudents() {
 
   const handleEditSave = async (id: number) => {
     try {
-      const payload = { ...editForm, year: Number(editForm.year) };
+      const payload = { ...editForm };
       await axios.put(`${API_BASE}/students/${id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -238,33 +222,7 @@ export default function AdminStudents() {
             className='w-full p-2 border rounded'
             required
           />
-          <input
-            type='text'
-            name='branch'
-            placeholder='Branch'
-            value={form.branch}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='number'
-            name='year'
-            placeholder='Year'
-            value={form.year}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='text'
-            name='rollNumber'
-            placeholder='Roll Number'
-            value={form.rollNumber}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-            required
-          />
+          {/* Removed branch, year, rollNumber fields */}
           <select
             name='gender'
             value={form.gender}
@@ -313,7 +271,8 @@ export default function AdminStudents() {
             onChange={handleChange}
             className='w-full p-2 border rounded'
           >
-            <option value='Y'>Y</option>
+            <option value='BEDSHEET'>Bedsheet</option>
+            <option value='PILLOW_COVER'>Pillow Cover</option>
             <option value='NA'>N/A</option>
           </select>
           <button
@@ -327,7 +286,7 @@ export default function AdminStudents() {
 
       <input
         type='text'
-        placeholder='Search by name or roll number'
+        placeholder='Search by name or email'
         className='border px-4 py-2 rounded w-full sm:w-1/2 md:w-1/3 mb-6 shadow-sm'
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -342,11 +301,7 @@ export default function AdminStudents() {
               <th className='p-2 border-b w-48 min-w-[10rem] max-w-[16rem]'>
                 Email
               </th>
-              <th className='p-2 border-b w-32 min-w-[6rem] max-w-[8rem]'>
-                Roll No
-              </th>
-              <th className='p-2 border-b'>Year</th>
-              <th className='p-2 border-b'>Branch</th>
+              {/* Removed Roll No, Year, Branch columns */}
               <th className='p-2 border-b'>Division</th>
               <th className='p-2 border-b'>Course</th>
               <th className='p-2 border-b'>From</th>
@@ -378,33 +333,7 @@ export default function AdminStudents() {
                         className='p-1 border rounded w-full max-w-xs'
                       />
                     </td>
-                    <td className='p-2 border w-32 min-w-[6rem] max-w-[8rem]'>
-                      <input
-                        type='text'
-                        name='rollNumber'
-                        value={editForm.rollNumber}
-                        onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full max-w-xs'
-                      />
-                    </td>
-                    <td className='p-2 border min-w-0'>
-                      <input
-                        type='number'
-                        name='year'
-                        value={editForm.year}
-                        onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full min-w-0 max-w-xs'
-                      />
-                    </td>
-                    <td className='p-2 border min-w-0'>
-                      <input
-                        type='text'
-                        name='branch'
-                        value={editForm.branch}
-                        onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full min-w-0 max-w-xs'
-                      />
-                    </td>
+                    {/* Removed rollNumber, year, branch edit fields */}
                     <td className='p-2 border min-w-0'>
                       <input
                         type='text'
@@ -448,7 +377,8 @@ export default function AdminStudents() {
                         onChange={handleEditFormChange}
                         className='p-1 border rounded w-full min-w-0 max-w-xs'
                       >
-                        <option value='Y'>Y</option>
+                        <option value='BEDSHEET'>Bedsheet</option>
+                        <option value='PILLOW_COVER'>Pillow Cover</option>
                         <option value='NA'>N/A</option>
                       </select>
                     </td>
@@ -480,19 +410,7 @@ export default function AdminStudents() {
                     >
                       {s.email}
                     </td>
-                    <td
-                      className='p-2 w-32 min-w-[6rem] max-w-[8rem] truncate'
-                      title={s.rollNumber}
-                    >
-                      <span
-                        className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm truncate w-full inline-block'
-                        title={s.rollNumber}
-                      >
-                        {s.rollNumber}
-                      </span>
-                    </td>
-                    <td className='p-2'>{s.year}</td>
-                    <td className='p-2'>{s.branch}</td>
+                    {/* Removed rollNumber, year, branch display */}
                     <td className='p-2'>{s.division}</td>
                     <td className='p-2'>{s.course}</td>
                     <td className='p-2'>
@@ -550,14 +468,7 @@ export default function AdminStudents() {
                       name='name'
                       value={editForm.name}
                       onChange={handleEditFormChange}
-                      className='font-bold p-1 border rounded w-1/2 mr-2'
-                    />
-                    <input
-                      type='text'
-                      name='rollNumber'
-                      value={editForm.rollNumber}
-                      onChange={handleEditFormChange}
-                      className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm p-1 border w-1/2'
+                      className='font-bold p-1 border rounded w-full'
                     />
                   </div>
                   <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
@@ -569,22 +480,7 @@ export default function AdminStudents() {
                       onChange={handleEditFormChange}
                       className='p-1 border rounded w-full'
                     />
-                    <span className='font-semibold'>Year:</span>
-                    <input
-                      type='number'
-                      name='year'
-                      value={editForm.year}
-                      onChange={handleEditFormChange}
-                      className='p-1 border rounded w-full'
-                    />
-                    <span className='font-semibold'>Branch:</span>
-                    <input
-                      type='text'
-                      name='branch'
-                      value={editForm.branch}
-                      onChange={handleEditFormChange}
-                      className='p-1 border rounded w-full'
-                    />
+                    {/* Removed year, branch edit fields */}
                     <span className='font-semibold'>Division:</span>
                     <input
                       type='text'
@@ -635,7 +531,8 @@ export default function AdminStudents() {
                       onChange={handleEditFormChange}
                       className='p-1 border rounded w-full'
                     >
-                      <option value='Y'>Y</option>
+                      <option value='BEDSHEET'>Bedsheet</option>
+                      <option value='PILLOW_COVER'>Pillow Cover</option>
                       <option value='NA'>N/A</option>
                     </select>
                   </div>
@@ -660,17 +557,12 @@ export default function AdminStudents() {
                 <>
                   <div className='flex justify-between mb-1'>
                     <span className='font-bold'>{s.name}</span>
-                    <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
-                      {s.rollNumber}
-                    </span>
+                    {/* Removed rollNumber display */}
                   </div>
                   <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
                     <span className='font-semibold'>Email:</span>
                     <span>{s.email}</span>
-                    <span className='font-semibold'>Year:</span>
-                    <span>{s.year}</span>
-                    <span className='font-semibold'>Branch:</span>
-                    <span>{s.branch}</span>
+                    {/* Removed year, branch display */}
                     <span className='font-semibold'>Division:</span>
                     <span>{s.division}</span>
                     <span className='font-semibold'>Course:</span>

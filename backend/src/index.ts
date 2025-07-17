@@ -10,16 +10,13 @@ import studentRoute from "./routes/student";
 import roomRoute from "./routes/room";
 import leaveRoute from "./routes/leave";
 import complaintRoute from "./routes/complaint";
-import feeRoute from "./routes/fee";
+// removed feeRoute import
 
 const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://hostel-ms-psi.vercel.app"
-    ], // allow local, and vercel frontend
+    origin: ["http://localhost:5173", "https://hostel-ms-psi.vercel.app"], // allow local, and vercel frontend
     credentials: true,
   })
 );
@@ -29,7 +26,7 @@ app.route("/students", studentRoute);
 app.route("/rooms", roomRoute);
 app.route("/leaves", leaveRoute);
 app.route("/complaints", complaintRoute);
-app.route("/payments", feeRoute);
+// removed /payments feeRoute
 
 app.get("/", async (c) => {
   const users = await prisma.user.findMany();

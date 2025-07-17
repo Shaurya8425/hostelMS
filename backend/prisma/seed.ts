@@ -3,9 +3,9 @@ import { hash } from "bcryptjs";
 
 async function main() {
   // Delete all data first to avoid unique constraint errors
-  await prisma.feePayment.deleteMany({});
-  await prisma.complaint.deleteMany({});
-  await prisma.leave.deleteMany({});
+  // removed feePayment deleteMany
+  // await prisma.complaint.deleteMany({});
+  // await prisma.leave.deleteMany({});
   await prisma.student.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.room.deleteMany({});
@@ -49,15 +49,12 @@ async function main() {
           name: `Student ${i + 1}`,
           email: user.email,
           phone: `123456789${i}`,
-          branch: i % 2 === 0 ? "CSE" : "ECE",
-          year: (i % 4) + 1,
-          rollNumber: `BR${i + 1}2023`,
           gender: i % 2 === 0 ? "MALE" : "FEMALE",
           division: i % 2 === 0 ? "A" : "B",
           course: i % 2 === 0 ? "BTech" : "MTech",
           fromDate: new Date(`2025-07-0${i + 1}`),
           toDate: new Date(`2025-12-0${i + 1}`),
-          linenIssued: i % 2 === 0 ? "Y" : "NA",
+          linenIssued: i % 2 === 0 ? "BEDSHEET" : "PILLOW_COVER",
           user: { connect: { id: user.id } },
         },
       })
@@ -207,18 +204,7 @@ async function main() {
   );
 
   // Create 5 fee payments
-  await Promise.all(
-    Array.from({ length: 5 }).map((_, i) =>
-      prisma.feePayment.create({
-        data: {
-          studentId: students[i].id,
-          amount: 5000 + i * 1000,
-          dueDate: new Date(`2025-08-0${i + 1}`),
-          status: i % 2 === 0 ? "PENDING" : "PAID",
-        },
-      })
-    )
-  );
+  // removed fee payments creation
 
   console.log("Seed data created successfully!");
 }

@@ -9,12 +9,11 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>({});
 
   const fetchStats = async () => {
-    const [students, rooms, leaves, complaints, payments] = await Promise.all([
+    const [students, rooms, leaves, complaints] = await Promise.all([
       axios.get(`${API_BASE}/students`),
       axios.get(`${API_BASE}/rooms`),
       axios.get(`${API_BASE}/leaves`),
       axios.get(`${API_BASE}/complaints`),
-      axios.get(`${API_BASE}/payments`),
     ]);
 
     setStats({
@@ -22,7 +21,6 @@ export default function AdminDashboard() {
       rooms: rooms.data.length,
       leaves: leaves.data.data.length,
       complaints: complaints.data.data.length,
-      payments: payments.data.data.length,
     });
   };
 
@@ -56,11 +54,6 @@ export default function AdminDashboard() {
             title: "Complaints",
             count: stats.complaints,
             color: "from-red-500 to-red-700",
-          },
-          {
-            title: "Payments",
-            count: stats.payments,
-            color: "from-purple-500 to-purple-700",
           },
         ].map((card) => (
           <div

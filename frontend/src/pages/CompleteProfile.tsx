@@ -8,9 +8,6 @@ export default function CompleteProfile() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    branch: "",
-    year: "",
-    rollNumber: "",
     gender: "MALE",
     division: "",
     course: "",
@@ -33,7 +30,6 @@ export default function CompleteProfile() {
 
       const payload = {
         ...form,
-        year: Number(form.year),
         fromDate: form.fromDate ? new Date(form.fromDate) : null,
         toDate: form.toDate ? new Date(form.toDate) : null,
         division: form.division || null,
@@ -92,38 +88,7 @@ export default function CompleteProfile() {
         </div>
 
         {/* Academic Details */}
-        <div className='space-y-2'>
-          <label className='text-sm text-gray-700'>Branch</label>
-          <input
-            name='branch'
-            placeholder='e.g. CSE'
-            onChange={handleChange}
-            required
-            className='input-field'
-          />
-        </div>
-        <div className='space-y-2'>
-          <label className='text-sm text-gray-700'>Year</label>
-          <input
-            name='year'
-            type='number'
-            placeholder='e.g. 2'
-            onChange={handleChange}
-            required
-            className='input-field'
-          />
-        </div>
-
-        <div className='space-y-2'>
-          <label className='text-sm text-gray-700'>Roll Number</label>
-          <input
-            name='rollNumber'
-            placeholder='e.g. 12345678'
-            onChange={handleChange}
-            required
-            className='input-field'
-          />
-        </div>
+        {/* Removed branch, year, rollNumber fields */}
         <div className='space-y-2'>
           <label className='text-sm text-gray-700'>Gender</label>
           <select
@@ -188,7 +153,8 @@ export default function CompleteProfile() {
             className='input-field'
           >
             <option value='NA'>Not Issued</option>
-            <option value='Y'>Issued</option>
+            <option value='BEDSHEET'>Bedsheet</option>
+            <option value='PILLOW_COVER'>Pillow Cover</option>
           </select>
         </div>
       </div>

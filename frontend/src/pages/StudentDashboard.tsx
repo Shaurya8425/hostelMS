@@ -60,9 +60,9 @@ export default function StudentDashboard() {
   const {
     name,
     email,
-    branch,
-    year,
-    rollNumber,
+    // branch removed
+    // year removed
+    // rollNumber removed
     gender,
     division,
     course,
@@ -72,7 +72,7 @@ export default function StudentDashboard() {
     room,
     complaints,
     leaves,
-    payments,
+    // payments removed
   } = profile;
 
   return (
@@ -92,15 +92,7 @@ export default function StudentDashboard() {
           <div>
             <span className='font-semibold'>Email:</span> {email}
           </div>
-          <div>
-            <span className='font-semibold'>Branch:</span> {branch}
-          </div>
-          <div>
-            <span className='font-semibold'>Year:</span> {year}
-          </div>
-          <div>
-            <span className='font-semibold'>Roll Number:</span> {rollNumber}
-          </div>
+          {/* Removed branch, year, roll number */}
           <div>
             <span className='font-semibold'>Gender:</span> {gender}
           </div>
@@ -119,7 +111,12 @@ export default function StudentDashboard() {
             {toDate ? new Date(toDate).toLocaleDateString() : ""}
           </div>
           <div>
-            <span className='font-semibold'>Linen Issued:</span> {linenIssued}
+            <span className='font-semibold'>Linen Issued:</span>{" "}
+            {linenIssued === "BEDSHEET"
+              ? "Bedsheet"
+              : linenIssued === "PILLOW_COVER"
+              ? "Pillow Cover"
+              : linenIssued}
           </div>
         </div>
       </div>
@@ -227,36 +224,7 @@ export default function StudentDashboard() {
           Apply for Leave
         </Link>
       </div>
-      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
-        <h2 className='font-bold text-lg mb-3 text-green-800'>Fee Payments</h2>
-        {payments && payments.length > 0 ? (
-          <ul className='list-disc ml-6 space-y-1'>
-            {payments.map((p: any) => (
-              <li key={p.id}>
-                Amount: <span className='font-semibold'>₹{p.amount}</span> |
-                Due: {new Date(p.dueDate).toLocaleDateString()} | Status:{" "}
-                <span
-                  className={
-                    p.status === "PAID"
-                      ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
-                      : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
-                  }
-                >
-                  {p.status}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className='text-gray-500 italic'>No fee records</div>
-        )}
-        <Link
-          to='/student/fees'
-          className='text-blue-600 underline mt-2 inline-block font-semibold hover:text-blue-800 transition'
-        >
-          View/Pay Fees
-        </Link>
-      </div>
+      {/* Fee Payments section removed */}
     </div>
   );
 }

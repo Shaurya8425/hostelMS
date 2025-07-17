@@ -10,13 +10,11 @@ import "react-toastify/dist/ReactToastify.css";
 import CompleteProfile from "./pages/CompleteProfile";
 import Complaint from "./pages/Complaint";
 import Leave from "./pages/Leave";
-import Fees from "./pages/Fees";
 import StudentRoom from "./pages/student/Room";
 import AdminStudents from "./pages/admin/Student";
 import AdminComplaints from "./pages/admin/Complaints";
 import AdminRooms from "./pages/admin/Rooms";
 import AdminLeaves from "./pages/admin/Leaves";
-import AdminFees from "./pages/admin/Fees";
 import AdminNavbar from "./components/AdminNavbar";
 import StudentNavbar from "./components/StudentNavbar";
 import { getUserRole } from "./utils/getUserRole";
@@ -72,14 +70,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path='/admin/Fees'
-            element={
-              <ProtectedRoute role='ADMIN'>
-                <AdminFees />
-              </ProtectedRoute>
-            }
-          />
 
           {/* Student Pages */}
           <Route
@@ -111,14 +101,6 @@ function App() {
             element={
               <ProtectedRoute role='STUDENT'>
                 <Leave />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/student/fees'
-            element={
-              <ProtectedRoute role='STUDENT'>
-                <Fees />
               </ProtectedRoute>
             }
           />
