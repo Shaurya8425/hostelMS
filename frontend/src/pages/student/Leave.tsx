@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import SkeletonLeave from "../components/SkeletonLeave";
-import { API_BASE } from "../api/apiBase";
+import SkeletonLeave from "../../components/skeleton/SkeletonLeave";
+import { API_BASE } from "../../api/apiBase";
 
 export default function Leave() {
   const [form, setForm] = useState({

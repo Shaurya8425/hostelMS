@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import SkeletonDashboard from "../components/SkeletonDashboard";
-import { API_BASE } from "../api/apiBase";
+import SkeletonDashboard from "../../components/skeleton/SkeletonDashboard";
+import { API_BASE } from "../../api/apiBase";
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null);

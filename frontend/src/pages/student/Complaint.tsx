@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import ComplaintList from "../components/complaint/ComplaintList";
-import FileComplaint from "../components/complaint/FileComplaint";
+import ComplaintList from "../../components/complaint/ComplaintList";
+import FileComplaint from "../../components/complaint/FileComplaint";
 import axios from "axios";
-import { getStudentComplaints } from "../api/complaintApi";
-import SkeletonComplaint from "../components/SkeletonComplaint";
-import { API_BASE } from "../api/apiBase";
+import { getStudentComplaints } from "../../api/complaintApi";
+import SkeletonComplaint from "../../components/skeleton/SkeletonComplaint";
+import { API_BASE } from "../../api/apiBase";
 
 export default function Complaint() {
   const [complaints, setComplaints] = useState<any[]>([]);

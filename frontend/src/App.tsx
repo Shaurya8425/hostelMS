@@ -1,15 +1,15 @@
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Signup from "./pages/Signup";
-import Login from "./pages/Login";
-import AdminDashboard from "./pages/AdminDashboard";
-import StudentDashboard from "./pages/StudentDashboard";
+import Signup from "./pages/student/Signup";
+import Login from "./pages/student/Login";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import CompleteProfile from "./pages/CompleteProfile";
-import Complaint from "./pages/Complaint";
-import Leave from "./pages/Leave";
+import CompleteProfile from "./pages/student/CompleteProfile";
+import Complaint from "./pages/student/Complaint";
+import Leave from "./pages/student/Leave";
 import StudentRoom from "./pages/student/Room";
 import AdminStudents from "./pages/admin/Student";
 import AdminComplaints from "./pages/admin/Complaints";
@@ -19,6 +19,7 @@ import AdminNavbar from "./components/AdminNavbar";
 import StudentNavbar from "./components/StudentNavbar";
 import { getUserRole } from "./utils/getUserRole";
 import { AuthProvider } from "./context/AuthContext";
+import HomePage from "./pages/Home";
 
 function App() {
   const role = getUserRole();
@@ -28,7 +29,8 @@ function App() {
         {role === "ADMIN" && <AdminNavbar />}
         {role === "STUDENT" && <StudentNavbar />}
         <Routes>
-          <Route path='/' element={<Login />} />
+          <Route path='/' element={<HomePage />} />
+          <Route path='/login' element={<Login />} />
           <Route path='/signup' element={<Signup />} />
           <Route
             path='admin/dashboard'

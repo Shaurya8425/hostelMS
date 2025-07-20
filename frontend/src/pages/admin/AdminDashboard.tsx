@@ -1,14 +1,17 @@
 // src/pages/AdminDashboard.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
-import RoomDiagram from "../components/RoomDiagram";
-import Spinner from "../components/Spinner";
-import { API_BASE } from "../api/apiBase";
-import { getLinenInventory } from "../api/linenApi";
+import RoomDiagram from "../../components/RoomDiagram";
+import Spinner from "../../components/Spinner";
+import { API_BASE } from "../../api/apiBase";
+import { getLinenInventory } from "../../api/linenApi";
 
 function AdminDashboard() {
   const [stats, setStats] = useState<any>({});
-  const [linen, setLinen] = useState<{ bedsheet: number; pillowCover: number } | null>(null);
+  const [linen, setLinen] = useState<{
+    bedsheet: number;
+    pillowCover: number;
+  } | null>(null);
 
   const fetchStats = async () => {
     const [students, rooms, leaves, complaints] = await Promise.all([
