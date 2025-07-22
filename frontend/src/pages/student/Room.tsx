@@ -9,6 +9,7 @@ type Room = {
   roomNumber: string;
   block: string;
   capacity: number;
+  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "BLOCKED";
   students: {
     id: number;
     name: string;
@@ -125,7 +126,12 @@ export default function StudentRoom() {
       {/* Grid for md+ screens */}
       <div className='hidden md:grid md:grid-cols-2 gap-6'>
         {rooms
-          .filter((room) => room.students.length < room.capacity)
+          .filter(
+            (room) =>
+              room.students.length < room.capacity &&
+              room.status !== "BLOCKED" &&
+              room.status !== "RESERVED"
+          )
           .map((room) => (
             <div
               key={room.id}
@@ -168,7 +174,12 @@ export default function StudentRoom() {
       {/* Card layout for mobile */}
       <div className='md:hidden flex flex-col gap-4'>
         {rooms
-          .filter((room) => room.students.length < room.capacity)
+          .filter(
+            (room) =>
+              room.students.length < room.capacity &&
+              room.status !== "BLOCKED" &&
+              room.status !== "RESERVED"
+          )
           .map((room) => (
             <div
               key={room.id}

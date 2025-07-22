@@ -170,12 +170,20 @@ async function main() {
     }),
   ]);
 
-  // Assign students to rooms (1 per room, rest unassigned)
+  // Get available rooms (not blocked or reserved)
+  const availableRooms = rooms.filter(
+    (room) => room.status !== "BLOCKED" && room.status !== "RESERVED"
+  );
+
+  // Assign students to available rooms only
   for (let i = 0; i < students.length; i++) {
-    await prisma.student.update({
-      where: { id: students[i].id },
-      data: { roomId: rooms[i % rooms.length].id },
-    });
+    // Only assign if there are available rooms
+    if (availableRooms.length > 0) {
+      await prisma.student.update({
+        where: { id: students[i].id },
+        data: { roomId: availableRooms[i % availableRooms.length].id },
+      });
+    }
   }
 
   // Create 5 complaints

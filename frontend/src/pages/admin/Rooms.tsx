@@ -248,11 +248,13 @@ export default function AdminRooms() {
             required
           >
             <option value=''>Select Room</option>
-            {rooms.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.roomNumber} ({r.block})
-              </option>
-            ))}
+            {rooms
+              .filter((r) => r.status !== "BLOCKED" && r.status !== "RESERVED")
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.roomNumber} ({r.block}) - {r.students.length}/{r.capacity}
+                </option>
+              ))}
           </select>
           <button
             type='submit'

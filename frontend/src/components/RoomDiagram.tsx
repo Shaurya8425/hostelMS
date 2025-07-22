@@ -101,9 +101,10 @@ export default function RoomDiagram() {
                                   </li>
                                 ))}
                               </ul>
-                            ) : (
+                            ) : room.status !== "BLOCKED" &&
+                              room.status !== "RESERVED" ? (
                               <span className='text-gray-400'>Vacant</span>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       ))}

@@ -40,6 +40,14 @@ roomRoute.put("/assign", async (c) => {
   const room = await prisma.room.findUnique({ where: { id: roomId } });
   if (!room) return c.json({ error: "Room not found" }, 404);
 
+  // Check if room is blocked or reserved
+  if (room.status === "BLOCKED" || room.status === "RESERVED") {
+    return c.json(
+      { error: "Cannot assign students to blocked or reserved rooms" },
+      400
+    );
+  }
+
   // Check capacity using count (more reliable than relation size)
   const currentCount = await prisma.student.count({
     where: { roomId },

@@ -1,53 +1,53 @@
-// src/pages/Login.tsx
+// src/pages/Signup.tsx
 import { useState } from "react";
-import { login } from "../../api/authApi";
+import { signup } from "../api/authApi";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
-export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+export default function Signup() {
+  const [form, setForm] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    role: "STUDENT" | "ADMIN";
+  }>({
+    name: "",
+    email: "",
+    password: "",
+    role: "STUDENT",
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await login(form);
-      toast.success("Login successful");
-
-      const { token, user } = res.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", user.role);
-      if (user.studentId) {
-        localStorage.setItem("studentId", user.studentId.toString());
-      }
-
-      if (user.role === "ADMIN") {
-        window.location.href = "/admin/dashboard";
-      } else {
-        window.location.href = "/student/dashboard";
-      }
+      const res = await signup(form);
+      toast.success("Signup successful!");
+      console.log(res.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Login failed");
+      toast.error("Signup failed!");
     }
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gray-100 px-2 sm:px-4 overflow-x-hidden'>
+    <div className='min-h-screen flex items-center justify-center px-2 sm:px-4'>
       <div className='w-full max-w-4xl bg-white shadow-xl rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2'>
-        {/* Left Panel */}
+        {/* Left Panel with welcome message */}
         <div className='bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-6 sm:p-10 flex flex-col justify-between min-h-[220px]'>
           <div>
             <h1 className='text-lg font-bold'>🏨 HMS</h1>
             <h2 className='mt-6 sm:mt-10 text-2xl sm:text-3xl font-semibold'>
-              Welcome to HMS
+              Create an Account
             </h2>
             <p className='mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed'>
-              Manage student accommodation, room allocation, complaints, and
-              leave records efficiently with our Hostel Management System.
+              Join the Hostel Management System to easily manage rooms,
+              students, fees, leave requests, and more — whether you're a
+              student or an admin.
             </p>
           </div>
           <p className='text-xs sm:text-sm mt-6 sm:mt-10'>
@@ -55,13 +55,13 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Right Panel */}
+        {/* Right Panel with signup form */}
         <div className='p-6 sm:p-10 flex flex-col justify-center'>
           <h2 className='text-xl sm:text-2xl font-bold text-blue-600'>
-            Login to HMS
+            Signup
           </h2>
           <p className='text-xs sm:text-sm text-gray-500 mt-2'>
-            Enter your credentials to access the dashboard.
+            Fill in your details to create a new HMS account.
           </p>
 
           <form
@@ -69,35 +69,55 @@ export default function Login() {
             className='mt-4 sm:mt-6 space-y-3 sm:space-y-4'
           >
             <input
-              name='email'
-              type='email'
-              placeholder='Email'
+              name='name'
+              placeholder='Full Name'
               onChange={handleChange}
               className='w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm'
               required
             />
+
+            <input
+              name='email'
+              type='email'
+              placeholder='Email Address'
+              onChange={handleChange}
+              className='w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm'
+              required
+            />
+
             <input
               name='password'
               type='password'
-              placeholder='Password'
+              placeholder='Create Password'
               onChange={handleChange}
               className='w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm'
               required
             />
+
+            <select
+              name='role'
+              onChange={handleChange}
+              className='w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm'
+              required
+            >
+              <option value=''>Select Role</option>
+              <option value='STUDENT'>Student</option>
+              <option value='ADMIN'>Admin</option>
+            </select>
 
             <button
               type='submit'
               className='w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200 text-sm'
             >
-              LOGIN
+              Create Account
             </button>
           </form>
 
           <div className='flex justify-between text-xs sm:text-sm mt-4 text-gray-600'>
             <p>
-              New User?{" "}
-              <Link to='/signup' className='text-blue-500 hover:underline'>
-                Signup
+              Already have an account?{" "}
+              <Link to='/login' className='text-blue-500 hover:underline'>
+                Login
               </Link>
             </p>
           </div>
