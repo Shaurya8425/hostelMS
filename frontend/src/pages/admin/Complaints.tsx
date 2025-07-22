@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE } from "../../api/apiBase";
+import SkeletonComplaints from "../../components/skeleton/admin/SkeletonComplaints";
 
 interface Complaint {
   id: number;
@@ -18,9 +19,11 @@ interface Complaint {
 
 export default function AdminComplaints() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
   const fetchComplaints = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_BASE}/complaints`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -28,6 +31,8 @@ export default function AdminComplaints() {
       setComplaints(res.data.data);
     } catch (err) {
       toast.error("Failed to fetch complaints");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,6 +56,8 @@ export default function AdminComplaints() {
   useEffect(() => {
     fetchComplaints();
   }, []);
+
+  if (loading) return <SkeletonComplaints />;
 
   return (
     <div className='p-2 sm:p-6'>

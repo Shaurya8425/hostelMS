@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE } from "../../api/apiBase";
+import SkeletonLeaves from "../../components/skeleton/admin/SkeletonLeaves";
 
 interface Leave {
   id: number;
@@ -19,9 +20,11 @@ interface Leave {
 
 export default function AdminLeaves() {
   const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
   const fetchLeaves = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_BASE}/leaves`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -29,6 +32,8 @@ export default function AdminLeaves() {
       setLeaves(res.data.data);
     } catch (err) {
       toast.error("Failed to fetch leave applications");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,6 +45,7 @@ export default function AdminLeaves() {
     id: number,
     status: "APPROVED" | "REJECTED"
   ) => {
+    setLoading(true);
     try {
       await axios.patch(
         `${API_BASE}/leaves/${id}/status`,
@@ -47,11 +53,16 @@ export default function AdminLeaves() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success(`Leave ${status.toLowerCase()} successfully`);
-      fetchLeaves();
+      await fetchLeaves();
     } catch (err) {
       toast.error("Failed to update leave status");
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return <SkeletonLeaves />;
+  }
 
   return (
     <div className='p-2 sm:p-6'>

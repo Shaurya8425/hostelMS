@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import SkeletonRoom from "../../components/skeleton/SkeletonRoom";
+import SkeletonRoom from "../../components/skeleton/student/SkeletonRoom";
 import { API_BASE } from "../../api/apiBase";
 
 type Room = {

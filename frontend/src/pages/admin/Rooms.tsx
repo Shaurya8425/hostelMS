@@ -30,6 +30,8 @@ interface Room {
   }[];
 }
 
+import SkeletonRooms from "../../components/skeleton/admin/SkeletonRooms";
+
 export default function AdminRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [form, setForm] = useState({
@@ -45,9 +47,11 @@ export default function AdminRooms() {
     roomId: "",
   });
   const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
   const fetchRooms = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_BASE}/rooms`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -55,6 +59,8 @@ export default function AdminRooms() {
       setRooms(res.data);
     } catch (err) {
       toast.error("Failed to fetch rooms");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,6 +87,7 @@ export default function AdminRooms() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const payload = {
         ...form,
@@ -103,11 +110,13 @@ export default function AdminRooms() {
       fetchRooms();
     } catch (err) {
       toast.error("Failed to create room");
+      setLoading(false);
     }
   };
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await axios.put(
         `${API_BASE}/rooms/assign`,
@@ -126,8 +135,11 @@ export default function AdminRooms() {
       toast.error(
         err?.response?.data?.error || "Failed to assign student to room"
       );
+      setLoading(false);
     }
   };
+
+  if (loading) return <SkeletonRooms />;
 
   return (
     <div className='p-2 sm:p-6'>

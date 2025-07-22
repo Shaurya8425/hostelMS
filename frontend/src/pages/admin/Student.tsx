@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE } from "../../api/apiBase";
+import SkeletonStudents from "../../components/skeleton/admin/SkeletonStudents";
 
 interface Student {
   id: number;
@@ -48,8 +49,10 @@ export default function AdminStudents() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
   const fetchStudents = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(
         `${API_BASE}/students?search=${search}&page=${page}`,
@@ -61,6 +64,8 @@ export default function AdminStudents() {
       setTotalPages(res.data.totalPages);
     } catch (err) {
       toast.error("Failed to fetch students");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -175,6 +180,8 @@ export default function AdminStudents() {
     setShowDeleteModal(false);
     setDeleteId(null);
   };
+
+  if (loading) return <SkeletonStudents />;
 
   return (
     <div className='p-2 sm:p-4'>

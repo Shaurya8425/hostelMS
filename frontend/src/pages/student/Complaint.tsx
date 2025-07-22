@@ -3,7 +3,7 @@ import ComplaintList from "../../components/complaint/ComplaintList";
 import FileComplaint from "../../components/complaint/FileComplaint";
 import axios from "axios";
 import { getStudentComplaints } from "../../api/complaintApi";
-import SkeletonComplaint from "../../components/skeleton/SkeletonComplaint";
+import SkeletonComplaint from "../../components/skeleton/student/SkeletonComplaint";
 import { API_BASE } from "../../api/apiBase";
 
 export default function Complaint() {

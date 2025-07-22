@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import SkeletonLeave from "../../components/skeleton/SkeletonLeave";
+import SkeletonLeave from "../../components/skeleton/student/SkeletonLeave";
 import { API_BASE } from "../../api/apiBase";
 
 export default function Leave() {
