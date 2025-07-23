@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { API_BASE } from "../api/apiBase";
+import { API_BASE } from "../../api/apiBase";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

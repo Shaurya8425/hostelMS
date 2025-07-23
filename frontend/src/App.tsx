@@ -7,7 +7,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import CompleteProfile from "./pages/CompleteProfile";
+import CompleteProfile from "./pages/student/CompleteProfile";
 import Complaint from "./pages/student/Complaint";
 import Leave from "./pages/student/Leave";
 import StudentRoom from "./pages/student/Room";
