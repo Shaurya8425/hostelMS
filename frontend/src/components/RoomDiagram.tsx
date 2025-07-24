@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE } from "../api/apiBase";
+import bed from "../assets/bed-bold-svgrepo-com.svg";
+import { useNavigate } from "react-router-dom";
 
 interface Room {
   id: number;
@@ -18,13 +20,14 @@ interface Room {
 }
 
 const statusColor: Record<Room["status"], string> = {
-  AVAILABLE: "bg-green-100 border-green-500",
+  AVAILABLE: "bg-blue-50 border-blue-500",
   OCCUPIED: "bg-yellow-100 border-yellow-500",
   RESERVED: "bg-blue-100 border-blue-500",
   BLOCKED: "bg-gray-200 border-gray-400 text-gray-400",
 };
 
 export default function RoomDiagram() {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,9 +75,10 @@ export default function RoomDiagram() {
                       .map((room) => (
                         <div
                           key={room.id}
+                          onClick={() => navigate(`/admin/rooms/${room.id}`)}
                           className={`border rounded p-2 text-center text-xs min-w-[90px] ${
                             statusColor[room.status]
-                          }`}
+                          } cursor-pointer hover:shadow-md transition-shadow`}
                           title={
                             room.designation
                               ? `${room.roomNumber} (${room.designation})`
@@ -92,19 +96,31 @@ export default function RoomDiagram() {
                           <div className='mb-1'>
                             <span className='font-semibold'>{room.status}</span>
                           </div>
-                          <div>
-                            {room.students.length > 0 ? (
-                              <ul className='text-[10px]'>
-                                {room.students.map((s) => (
-                                  <li key={s.id}>
-                                    {s.name} ({s.rollNumber})
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : room.status !== "BLOCKED" &&
-                              room.status !== "RESERVED" ? (
-                              <span className='text-gray-400'>Vacant</span>
-                            ) : null}
+                          <div className='flex flex-wrap gap-1 justify-center'>
+                            {[...Array(room.capacity)].map((_, index) => {
+                              const isOccupied = index < room.students.length;
+                              const student = room.students[index];
+                              return (
+                                <div
+                                  key={index}
+                                  className={`relative border p-1 rounded ${
+                                    isOccupied ? "bg-red-200" : "bg-green-200"
+                                  }`}
+                                  title={
+                                    student
+                                      ? `${student.name} (${student.rollNumber})`
+                                      : "Vacant"
+                                  }
+                                >
+                                  <span className='text-[10px]'>
+                                    <img className='w-4' src={bed} alt='' />
+                                  </span>
+                                  <span className='absolute -top-1 -right-1 text-[8px] font-bold'>
+                                    B{index + 1}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       ))}

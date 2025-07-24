@@ -20,26 +20,29 @@ model User {
 }
 
 model Student {
-  id          Int          @id @default(autoincrement())
-  name        String
-  email       String       @unique
-  phone       String
+  id              Int         @id @default(autoincrement())
+  name            String
+  email           String      @unique
+  phone           String
   // branch removed
   // year removed
   // rollNumber removed
-  gender      Gender
-  division    String? // Now optional
-  course      String? // Now optional
-  fromDate    DateTime? // Now optional
-  toDate      DateTime? // Now optional
-  linenIssued LinenStatus? // Now optional
-  roomId      Int?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  complaints  Complaint[]
-  leaves      Leave[]
-  room        Room?        @relation(fields: [roomId], references: [id])
-  user        User?
+  gender          Gender
+  division        String? // Now optional
+  course          String? // Now optional
+  fromDate        DateTime? // Now optional
+  toDate          DateTime? // Now optional
+  bedsheetIssued  Boolean     @default(false)
+  pillowIssued    Boolean     @default(false)
+  blanketIssued   Boolean     @default(false)
+  linenIssuedDate DateTime?
+  roomId          Int?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  complaints      Complaint[]
+  leaves          Leave[]
+  room            Room?       @relation(fields: [roomId], references: [id])
+  user            User?
 }
 
 model Room {
@@ -121,8 +124,15 @@ enum LinenStatus {
 }
 
 model LinenInventory {
-  id          Int      @id @default(autoincrement())
-  bedsheet    Int      @default(0)
-  pillowCover Int      @default(0)
-  updatedAt   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  bedsheet       Int      @default(0) // Total inventory
+  bedsheetActive Int      @default(0) // Currently in use
+  bedsheetInHand Int      @default(0) // Available for distribution
+  pillowCover    Int      @default(0) // Total inventory
+  pillowActive   Int      @default(0) // Currently in use
+  pillowInHand   Int      @default(0) // Available for distribution
+  blanket        Int      @default(0) // Total inventory
+  blanketActive  Int      @default(0) // Currently in use
+  blanketInHand  Int      @default(0) // Available for distribution
+  updatedAt      DateTime @updatedAt
 }

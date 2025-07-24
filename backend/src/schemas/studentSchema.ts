@@ -10,5 +10,5 @@ export const studentSchema = z.object({
   course: z.string().optional().nullable(),
   fromDate: z.coerce.date().optional().nullable(),
   toDate: z.coerce.date().optional().nullable(),
-  linenIssued: z.enum(["BEDSHEET", "PILLOW_COVER", "NA"]).optional(),
+  blanketRequired: z.boolean().default(false),
 });

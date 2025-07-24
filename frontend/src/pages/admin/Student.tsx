@@ -3,18 +3,29 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { API_BASE } from "../../api/apiBase";
 import SkeletonStudents from "../../components/skeleton/admin/SkeletonStudents";
+import bed from "../../assets/bed-svgrepo-com.svg";
+import pillow from "../../assets/pillow-svgrepo-com.svg";
+import blankie from "../../assets/blanket-svgrepo-com.svg";
+
 
 interface Student {
   id: number;
   name: string;
   email: string;
   phone: string;
-  gender: string;
-  division?: string;
-  course?: string;
-  fromDate?: string;
-  toDate?: string;
-  linenIssued?: "BEDSHEET" | "PILLOW_COVER" | "NA";
+  gender: "MALE" | "FEMALE" | "OTHER";
+  division?: string | null;
+  course?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+  bedsheetCount: number;
+  pillowCount: number;
+  blanketCount: number;
+  linenInventory?: {
+    bedsheets: number;
+    pillows: number;
+    blankets: number;
+  };
 }
 
 export default function AdminStudents() {
@@ -27,24 +38,28 @@ export default function AdminStudents() {
     name: "",
     email: "",
     phone: "",
-    gender: "MALE",
+    gender: "MALE" as "MALE" | "FEMALE" | "OTHER",
     division: "",
     course: "",
     fromDate: "",
     toDate: "",
-    linenIssued: "BEDSHEET",
+    bedsheetCount: 1,
+    pillowCount: 2,
+    blanketCount: 0,
   });
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
     phone: "",
-    gender: "MALE",
+    gender: "MALE" as "MALE" | "FEMALE" | "OTHER",
     division: "",
     course: "",
     fromDate: "",
     toDate: "",
-    linenIssued: "BEDSHEET",
+    bedsheetCount: 1,
+    pillowCount: 2,
+    blanketCount: 0,
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -77,17 +92,31 @@ export default function AdminStudents() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Ensure year is sent as a number
       const payload = {
         ...form,
         division: form.division || null,
         course: form.course || null,
         fromDate: form.fromDate || null,
         toDate: form.toDate || null,
-        linenIssued: form.linenIssued || null,
+        bedsheetCount: form.bedsheetCount,
+        pillowCount: form.pillowCount,
+        blanketCount: form.blanketCount,
+        linenInventory: {
+          bedsheets: form.bedsheetCount,
+          pillows: form.pillowCount,
+          blankets: form.blanketCount,
+        },
       };
+      if (!token) {
+        toast.error("You must be logged in to add a student");
+        return;
+      }
+
       await axios.post(`${API_BASE}/students`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
       toast.success("Student added successfully");
       setShowAddForm(false);
@@ -101,17 +130,25 @@ export default function AdminStudents() {
         course: "",
         fromDate: "",
         toDate: "",
-        linenIssued: "BEDSHEET",
+        bedsheetCount: 1,
+        pillowCount: 2,
+        blanketCount: 0,
       });
-    } catch (err) {
-      toast.error("Failed to add student");
+    } catch (err: any) {
+      console.error("Error adding student:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to add student";
+      toast.error(errorMessage);
     }
   };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    // Convert to number for number inputs
+    const newValue = type === "number" ? Number(value) : value;
+    setForm({ ...form, [name]: newValue });
   };
 
   // Inline edit handlers
@@ -126,27 +163,52 @@ export default function AdminStudents() {
       course: student.course || "",
       fromDate: student.fromDate || "",
       toDate: student.toDate || "",
-      linenIssued: student.linenIssued || "BEDSHEET",
+      bedsheetCount:
+        student.linenInventory?.bedsheets || student.bedsheetCount || 1,
+      pillowCount: student.linenInventory?.pillows || student.pillowCount || 2,
+      blanketCount:
+        student.linenInventory?.blankets || student.blanketCount || 0,
     });
   };
 
   const handleEditFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    // Convert to number for number inputs
+    const newValue = type === "number" ? Number(value) : value;
+    setEditForm({ ...editForm, [name]: newValue });
   };
 
   const handleEditSave = async (id: number) => {
     try {
-      const payload = { ...editForm };
+      const payload = {
+        ...editForm,
+        linenInventory: {
+          bedsheets: editForm.bedsheetCount,
+          pillows: editForm.pillowCount,
+          blankets: editForm.blanketCount,
+        },
+      };
+      if (!token) {
+        toast.error("You must be logged in to update a student");
+        return;
+      }
+
       await axios.put(`${API_BASE}/students/${id}`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
       toast.success("Student updated successfully");
       setEditId(null);
       fetchStudents();
-    } catch (err) {
-      toast.error("Failed to update student");
+    } catch (err: any) {
+      console.error("Error updating student:", err);
+      const errorMessage =
+        err.response?.data?.message || "Failed to update student";
+      toast.error(errorMessage);
     }
   };
 
@@ -187,7 +249,7 @@ export default function AdminStudents() {
     <div className='p-2 sm:p-4'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
         <h1 className='text-2xl sm:text-3xl font-extrabold text-blue-900'>
-          Student Management
+          agement
         </h1>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
@@ -200,95 +262,197 @@ export default function AdminStudents() {
       {showAddForm && (
         <form
           onSubmit={handleAdd}
-          className='space-y-2 bg-white p-4 sm:p-6 rounded-xl border shadow mb-6 max-w-md w-full'
+          className='space-y-4 bg-white p-6 rounded-xl border shadow-lg mb-6 max-w-xl mx-auto'
         >
-          <input
-            type='text'
-            name='name'
-            placeholder='Name'
-            value={form.name}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='email'
-            name='email'
-            placeholder='Email'
-            value={form.email}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='text'
-            name='phone'
-            placeholder='Phone'
-            value={form.phone}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-            required
-          />
-          {/* Removed branch, year, rollNumber fields */}
-          <select
-            name='gender'
-            value={form.gender}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-          >
-            <option value='MALE'>Male</option>
-            <option value='FEMALE'>Female</option>
-            <option value='OTHER'>Other</option>
-          </select>
-          <input
-            type='text'
-            name='division'
-            placeholder='Division'
-            value={form.division}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-          />
-          <input
-            type='text'
-            name='course'
-            placeholder='Course'
-            value={form.course}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-          />
-          <input
-            type='date'
-            name='fromDate'
-            placeholder='From Date'
-            value={form.fromDate}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-          />
-          <input
-            type='date'
-            name='toDate'
-            placeholder='To Date'
-            value={form.toDate}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-          />
-          <select
-            name='linenIssued'
-            value={form.linenIssued}
-            onChange={handleChange}
-            className='w-full p-2 border rounded'
-          >
-            <option value='BEDSHEET'>Bedsheet</option>
-            <option value='PILLOW_COVER'>Pillow Cover</option>
-            <option value='Y'>Both (Bedsheet & Pillow Cover)</option>
-            <option value='NA'>N/A</option>
-          </select>
-          <button
-            type='submit'
-            className='bg-gradient-to-r from-green-500 to-green-700 text-white px-4 py-2 rounded shadow hover:from-green-600 hover:to-green-800 transition'
-          >
-            Add Student
-          </button>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                Full Name *
+              </label>
+              <input
+                type='text'
+                name='name'
+                value={form.name}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                required
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                Email Address *
+              </label>
+              <input
+                type='email'
+                name='email'
+                value={form.email}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                required
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                Phone Number *
+              </label>
+              <input
+                type='text'
+                name='phone'
+                value={form.phone}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                required
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                Gender *
+              </label>
+              <select
+                name='gender'
+                value={form.gender}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                required
+              >
+                <option value='MALE'>Male</option>
+                <option value='FEMALE'>Female</option>
+                <option value='OTHER'>Other</option>
+              </select>
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                Division
+              </label>
+              <input
+                type='text'
+                name='division'
+                value={form.division}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                Course
+              </label>
+              <input
+                type='text'
+                name='course'
+                value={form.course}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                From Date
+              </label>
+              <input
+                type='date'
+                name='fromDate'
+                value={form.fromDate}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
+                To Date
+              </label>
+              <input
+                type='date'
+                name='toDate'
+                value={form.toDate}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              />
+            </div>
+          </div>
+
+          <div className='border-t pt-4 mt-4'>
+            <h3 className='text-lg font-medium text-gray-900 mb-3'>
+              Linen Allocation
+            </h3>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+              <div className='space-y-1'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Bedsheets
+                </label>
+                <div className='flex items-center space-x-2'>
+                  <input
+                    type='number'
+                    name='bedsheetCount'
+                    min='0'
+                    max='2'
+                    value={form.bedsheetCount}
+                    onChange={handleChange}
+                    className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  />
+                  <span className='text-sm text-gray-500'>Max: 2</span>
+                </div>
+              </div>
+
+              <div className='space-y-1'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Pillows
+                </label>
+                <div className='flex items-center space-x-2'>
+                  <input
+                    type='number'
+                    name='pillowCount'
+                    min='0'
+                    max='4'
+                    value={form.pillowCount}
+                    onChange={handleChange}
+                    className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  />
+                  <span className='text-sm text-gray-500'>Max: 4</span>
+                </div>
+              </div>
+
+              <div className='space-y-1'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Blankets (Optional)
+                </label>
+                <div className='flex items-center space-x-2'>
+                  <input
+                    type='number'
+                    name='blanketCount'
+                    min='0'
+                    max='2'
+                    value={form.blanketCount}
+                    onChange={handleChange}
+                    className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  />
+                  <span className='text-sm text-gray-500'>Max: 2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className='flex justify-end space-x-3 pt-4'>
+            <button
+              type='button'
+              onClick={() => setShowAddForm(false)}
+              className='px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition'
+            >
+              Cancel
+            </button>
+            <button
+              type='submit'
+              className='px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-800 transition'
+            >
+              Add Student
+            </button>
+          </div>
         </form>
       )}
 
@@ -314,7 +478,7 @@ export default function AdminStudents() {
               <th className='p-2 border-b'>Course</th>
               <th className='p-2 border-b'>From</th>
               <th className='p-2 border-b'>To</th>
-              <th className='p-2 border-b'>Linen Issued</th>
+              <th className='p-2 border-b'>Linen Inventory</th>
               <th className='p-2 border-b'>Actions</th>
             </tr>
           </thead>
@@ -379,16 +543,50 @@ export default function AdminStudents() {
                       />
                     </td>
                     <td className='p-2 border min-w-0'>
-                      <select
-                        name='linenIssued'
-                        value={editForm.linenIssued}
-                        onChange={handleEditFormChange}
-                        className='p-1 border rounded w-full min-w-0 max-w-xs'
-                      >
-                        <option value='BEDSHEET'>Bedsheet</option>
-                        <option value='PILLOW_COVER'>Pillow Cover</option>
-                        <option value='NA'>N/A</option>
-                      </select>
+                      <div className='space-y-2'>
+                        <div>
+                          <label className='block text-sm font-medium text-gray-700 mb-1'>
+                            Bedsheets
+                          </label>
+                          <input
+                            type='number'
+                            name='bedsheetCount'
+                            min='0'
+                            max='2'
+                            value={editForm.bedsheetCount}
+                            onChange={handleEditFormChange}
+                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                          />
+                        </div>
+                        <div>
+                          <label className='block text-sm font-medium text-gray-700 mb-1'>
+                            Pillows
+                          </label>
+                          <input
+                            type='number'
+                            name='pillowCount'
+                            min='0'
+                            max='4'
+                            value={editForm.pillowCount}
+                            onChange={handleEditFormChange}
+                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                          />
+                        </div>
+                        <div>
+                          <label className='block text-sm font-medium text-gray-700 mb-1'>
+                            Blankets
+                          </label>
+                          <input
+                            type='number'
+                            name='blanketCount'
+                            min='0'
+                            max='2'
+                            value={editForm.blanketCount}
+                            onChange={handleEditFormChange}
+                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                          />
+                        </div>
+                      </div>
                     </td>
                     <td className='p-2 border space-x-2 min-w-0'>
                       <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
@@ -429,7 +627,33 @@ export default function AdminStudents() {
                     <td className='p-2'>
                       {s.toDate ? new Date(s.toDate).toLocaleDateString() : ""}
                     </td>
-                    <td className='p-2'>{s.linenIssued}</td>
+                    <td className='p-2'>
+                      <div className='space-y-1'>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-sm text-gray-600'><img className="w-4" src={bed} alt="" /></span>
+                          <span className='font-medium'>Bedsheets:</span>
+                          <span className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs'>
+                            {s.linenInventory?.bedsheets ||
+                              s.bedsheetCount ||
+                              1}
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-sm text-gray-600'><img className="w-4" src={pillow} alt="" /></span>
+                          <span className='font-medium'>Pillows:</span>
+                          <span className='bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs'>
+                            {s.linenInventory?.pillows || s.pillowCount || 2}
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-sm text-gray-600'><img className="w-4" src={blankie} alt="" /></span>
+                          <span className='font-medium'>Blankets:</span>
+                          <span className='bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs'>
+                            {s.linenInventory?.blankets || s.blanketCount || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
                     <td className='p-2 space-x-2'>
                       <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
                         <button
@@ -532,18 +756,51 @@ export default function AdminStudents() {
                       <option value='FEMALE'>Female</option>
                       <option value='OTHER'>Other</option>
                     </select>
-                    <span className='font-semibold'>Linen Issued:</span>
-                    <select
-                      name='linenIssued'
-                      value={editForm.linenIssued}
-                      onChange={handleEditFormChange}
-                      className='p-1 border rounded w-full'
-                    >
-                      <option value='BEDSHEET'>Bedsheet</option>
-                      <option value='PILLOW_COVER'>Pillow Cover</option>
-                      <option value='Y'>Both (Bedsheet & Pillow Cover)</option>
-                      <option value='NA'>N/A</option>
-                    </select>
+                    <span className='font-semibold'>Linen Inventory:</span>
+                    <div className='space-y-2'>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                          Bedsheets
+                        </label>
+                        <input
+                          type='number'
+                          name='bedsheetCount'
+                          min='0'
+                          max='2'
+                          value={editForm.bedsheetCount}
+                          onChange={handleEditFormChange}
+                          className='p-1 border rounded w-full'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                          Pillows
+                        </label>
+                        <input
+                          type='number'
+                          name='pillowCount'
+                          min='0'
+                          max='4'
+                          value={editForm.pillowCount}
+                          onChange={handleEditFormChange}
+                          className='p-1 border rounded w-full'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                          Blankets
+                        </label>
+                        <input
+                          type='number'
+                          name='blanketCount'
+                          min='0'
+                          max='2'
+                          value={editForm.blanketCount}
+                          onChange={handleEditFormChange}
+                          className='p-1 border rounded w-full'
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div className='flex gap-2 mt-2'>
                     <button
@@ -586,8 +843,21 @@ export default function AdminStudents() {
                     <span>
                       {s.toDate ? new Date(s.toDate).toLocaleDateString() : ""}
                     </span>
-                    <span className='font-semibold'>Linen Issued:</span>
-                    <span>{s.linenIssued}</span>
+                    <span className='font-semibold'>Linen Inventory:</span>
+                    <div>
+                      <div>
+                        Bedsheets:{" "}
+                        {s.linenInventory?.bedsheets || s.bedsheetCount || 1}
+                      </div>
+                      <div>
+                        Pillows:{" "}
+                        {s.linenInventory?.pillows || s.pillowCount || 2}
+                      </div>
+                      <div>
+                        Blankets:{" "}
+                        {s.linenInventory?.blankets || s.blanketCount || 0}
+                      </div>
+                    </div>
                   </div>
                   <div className='flex gap-2 mt-2'>
                     <button

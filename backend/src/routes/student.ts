@@ -22,20 +22,15 @@ const studentRoute = new Hono<UserContext>();
 // ✅ Admin-only: Create student + linked user (default password)
 studentRoute.post(
   "/",
-  zValidator(
-    "json",
-    z.object({
-      name: z.string(),
-      email: z.string().email(),
-      phone: z.string(),
-      gender: z.enum(["MALE", "FEMALE", "OTHER"]),
-      division: z.string().optional().nullable(),
-      course: z.string().optional().nullable(),
-      fromDate: z.coerce.date().optional().nullable(),
-      toDate: z.coerce.date().optional().nullable(),
-      linenIssued: z.enum(["BEDSHEET", "PILLOW_COVER", "Y", "NA"]),
-    })
-  ),
+  authMiddleware,
+  async (c, next) => {
+    const user = c.get("user");
+    if (user.role !== "ADMIN") {
+      return c.json({ error: "Only admins can create students" }, 403);
+    }
+    await next();
+  },
+  zValidator("json", studentSchema),
   async (c) => {
     const body = c.req.valid("json");
 
@@ -48,43 +43,40 @@ studentRoute.post(
       course,
       fromDate,
       toDate,
-      linenIssued,
+      blanketRequired = false,
     } = body;
 
-    // Linen inventory logic
-    if (linenIssued && linenIssued !== "NA") {
-      let inventory = await prisma.linenInventory.findFirst();
-      if (!inventory) {
-        inventory = await prisma.linenInventory.create({
-          data: { bedsheet: 0, pillowCover: 0 },
-        });
-      }
-      if (linenIssued === "Y") {
-        if (inventory.bedsheet < 1 || inventory.pillowCover < 1) {
-          return c.json({ error: "Not enough linen available" }, 400);
-        }
-        await prisma.linenInventory.update({
-          where: { id: inventory.id },
-          data: { bedsheet: { decrement: 1 }, pillowCover: { decrement: 1 } },
-        });
-      } else if (linenIssued === "BEDSHEET") {
-        if (inventory.bedsheet < 1) {
-          return c.json({ error: "Not enough bedsheets available" }, 400);
-        }
-        await prisma.linenInventory.update({
-          where: { id: inventory.id },
-          data: { bedsheet: { decrement: 1 } },
-        });
-      } else if (linenIssued === "PILLOW_COVER") {
-        if (inventory.pillowCover < 1) {
-          return c.json({ error: "Not enough pillow covers available" }, 400);
-        }
-        await prisma.linenInventory.update({
-          where: { id: inventory.id },
-          data: { pillowCover: { decrement: 1 } },
-        });
-      }
+    // Get or create linen inventory
+    let inventory = await prisma.linenInventory.findFirst();
+    if (!inventory) {
+      inventory = await prisma.linenInventory.create({
+        data: { bedsheet: 0, pillowCover: 0 },
+      });
     }
+
+    // Check if we have enough linen for the new student (1 bedsheet and 2 pillows)
+    if (inventory.bedsheet < 1 || inventory.pillowCover < 2) {
+      return c.json(
+        {
+          error: "Not enough linen available",
+          required: { bedsheets: 1, pillowCovers: 2 },
+          available: {
+            bedsheets: inventory.bedsheet,
+            pillowCovers: inventory.pillowCover,
+          },
+        },
+        400
+      );
+    }
+
+    // Update linen inventory
+    await prisma.linenInventory.update({
+      where: { id: inventory.id },
+      data: {
+        bedsheet: { decrement: 1 },
+        pillowCover: { decrement: 2 },
+      },
+    });
 
     try {
       // Only send valid fields to Prisma
@@ -98,7 +90,10 @@ studentRoute.post(
           course,
           fromDate,
           toDate,
-          linenIssued,
+          bedsheetIssued: true, // Always issue one bedsheet
+          pillowIssued: true, // Always issue two pillows
+          blanketIssued: blanketRequired,
+          linenIssuedDate: new Date(),
           user: {
             create: {
               email,
@@ -139,7 +134,7 @@ studentRoute.post(
       course: z.string().optional().nullable(),
       fromDate: z.coerce.date().optional().nullable(),
       toDate: z.coerce.date().optional().nullable(),
-      linenIssued: z.enum(["BEDSHEET", "PILLOW_COVER", "Y", "NA"]),
+      blanketRequired: z.boolean().default(false),
     })
   ),
   async (c) => {
@@ -153,40 +148,38 @@ studentRoute.post(
     const data = c.req.valid("json");
 
     try {
-      // Linen inventory logic
-      if (data.linenIssued && data.linenIssued !== "NA") {
-        let inventory = await prisma.linenInventory.findFirst();
-        if (!inventory) {
-          inventory = await prisma.linenInventory.create({
-            data: { bedsheet: 0, pillowCover: 0 },
-          });
-        }
-        if (data.linenIssued === "Y") {
-          if (inventory.bedsheet < 1 || inventory.pillowCover < 1) {
-            return c.json({ error: "Not enough linen available" }, 400);
-          }
-          await prisma.linenInventory.update({
-            where: { id: inventory.id },
-            data: { bedsheet: { decrement: 1 }, pillowCover: { decrement: 1 } },
-          });
-        } else if (data.linenIssued === "BEDSHEET") {
-          if (inventory.bedsheet < 1) {
-            return c.json({ error: "Not enough bedsheets available" }, 400);
-          }
-          await prisma.linenInventory.update({
-            where: { id: inventory.id },
-            data: { bedsheet: { decrement: 1 } },
-          });
-        } else if (data.linenIssued === "PILLOW_COVER") {
-          if (inventory.pillowCover < 1) {
-            return c.json({ error: "Not enough pillow covers available" }, 400);
-          }
-          await prisma.linenInventory.update({
-            where: { id: inventory.id },
-            data: { pillowCover: { decrement: 1 } },
-          });
-        }
+      // Get or create linen inventory
+      let inventory = await prisma.linenInventory.findFirst();
+      if (!inventory) {
+        inventory = await prisma.linenInventory.create({
+          data: { bedsheet: 0, pillowCover: 0 },
+        });
       }
+
+      // Check if we have enough linen for the new student (1 bedsheet and 2 pillows)
+      if (inventory.bedsheet < 1 || inventory.pillowCover < 2) {
+        return c.json(
+          {
+            error: "Not enough linen available",
+            required: { bedsheets: 1, pillowCovers: 2 },
+            available: {
+              bedsheets: inventory.bedsheet,
+              pillowCovers: inventory.pillowCover,
+            },
+          },
+          400
+        );
+      }
+
+      // Update linen inventory
+      await prisma.linenInventory.update({
+        where: { id: inventory.id },
+        data: {
+          bedsheet: { decrement: 1 },
+          pillowCover: { decrement: 2 },
+        },
+      });
+
       const student = await prisma.student.create({
         data: {
           name: data.name,
@@ -196,7 +189,10 @@ studentRoute.post(
           course: data.course,
           fromDate: data.fromDate,
           toDate: data.toDate,
-          linenIssued: data.linenIssued,
+          bedsheetIssued: true, // Always issue one bedsheet
+          pillowIssued: true, // Always issue two pillows
+          blanketIssued: data.blanketRequired,
+          linenIssuedDate: new Date(),
           email: user.email,
           user: { connect: { id: user.id } },
         },

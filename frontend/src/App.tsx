@@ -15,11 +15,13 @@ import AdminStudents from "./pages/admin/Student";
 import AdminComplaints from "./pages/admin/Complaints";
 import AdminRooms from "./pages/admin/Rooms";
 import AdminLeaves from "./pages/admin/Leaves";
+import RoomDetails from "./pages/admin/RoomDetails";
 import AdminNavbar from "./components/AdminNavbar";
 import StudentNavbar from "./components/StudentNavbar";
 import { getUserRole } from "./utils/getUserRole";
 import { AuthProvider } from "./context/AuthContext";
 import HomePage from "./pages/Home";
+import LinenDetails from "./pages/admin/LinenDetails";
 
 function App() {
   const role = getUserRole();
@@ -49,6 +51,14 @@ function App() {
             }
           />
           <Route
+            path='/admin/rooms/:id'
+            element={
+              <ProtectedRoute role='ADMIN'>
+                <RoomDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path='/admin/complaints'
             element={
               <ProtectedRoute role='ADMIN'>
@@ -72,6 +82,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path='/admin/linen'
+            element={
+              <ProtectedRoute role='ADMIN'>
+                  <LinenDetails />
+              </ProtectedRoute>
+            }
+          />
+
 
           {/* Student Pages */}
           <Route
