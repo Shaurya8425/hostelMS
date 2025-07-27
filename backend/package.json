@@ -9,7 +9,8 @@
     "dev": "npm run build && node dist/index.js",
     "seed": "ts-node prisma/seed.ts",
     "db:deploy": "bash ./scripts/deploy-db.sh",
-    "postinstall": "prisma generate && prisma migrate reset --force || prisma migrate deploy"
+    "db:neon": "node scripts/neon-migrate.js",
+    "postinstall": "node scripts/neon-migrate.js && npm run build"
   },
   "keywords": [],
   "author": "",
