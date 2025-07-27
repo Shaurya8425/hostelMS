@@ -19,16 +19,16 @@ execSync('npx prisma generate', { stdio: 'inherit' });
 
 console.log('🔄 Syncing database schema...');
 try {
-  // Try db push first
-  execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    // Try db push first
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
 } catch (error) {
-  console.log('⚠️ DB push failed, attempting reset...');
-  try {
-    execSync('npx prisma migrate reset --force', { stdio: 'inherit' });
-  } catch (resetError) {
-    console.error('❌ Database setup failed:', resetError.message);
-    process.exit(1);
-  }
+    console.log('⚠️ DB push failed, attempting reset...');
+    try {
+        execSync('npx prisma migrate reset --force', { stdio: 'inherit' });
+    } catch (resetError) {
+        console.error('❌ Database setup failed:', resetError.message);
+        process.exit(1);
+    }
 }
 
 console.log('🏗️ Building application...');
