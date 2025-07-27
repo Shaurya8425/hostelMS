@@ -6,13 +6,13 @@ import { API_BASE } from "../../api/apiBase";
 interface Student {
   id: number;
   name: string;
-  rollNumber: string;
+  rollNumber?: string;
   email: string;
-}
-
-interface AssignForm {
-  studentEmail: string;
-  roomId: string;
+  room?: {
+    id: number;
+    roomNumber: string;
+    block: string;
+  } | null;
 }
 
 interface Room {
@@ -23,11 +23,20 @@ interface Room {
   designation?: string | null;
   capacity: number;
   status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "BLOCKED";
+  _count?: {
+    students: number;
+  };
   students: {
     id: number;
     name: string;
-    rollNumber: string;
+    email: string;
+    rollNumber?: string;
   }[];
+}
+
+interface AssignForm {
+  studentId: number | null;
+  roomId: number | null;
 }
 
 import SkeletonRooms from "../../components/skeleton/admin/SkeletonRooms";
@@ -43,8 +52,8 @@ export default function AdminRooms() {
     status: "AVAILABLE" as Room["status"],
   });
   const [assignForm, setAssignForm] = useState<AssignForm>({
-    studentEmail: "",
-    roomId: "",
+    studentId: null,
+    roomId: null,
   });
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,17 +75,27 @@ export default function AdminRooms() {
 
   const fetchStudents = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/students`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (Array.isArray(res.data.data)) {
+      // Request all students with their room information
+      const res = await axios.get<{ data: Student[]; totalItems: number }>(
+        `${API_BASE}/students?limit=1000`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data && Array.isArray(res.data.data)) {
         setStudents(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setStudents(res.data);
       } else {
+        console.error("Unexpected students response format:", res.data);
+        toast.error("Error loading student data");
         setStudents([]);
       }
     } catch (err) {
-      setStudents([]);
+      console.error("Error fetching students:", err);
       toast.error("Failed to fetch students");
+      setStudents([]);
     }
   };
 
@@ -116,25 +135,61 @@ export default function AdminRooms() {
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
     try {
-      await axios.put(
-        `${API_BASE}/rooms/assign`,
-        {
-          studentEmail: assignForm.studentEmail,
-          roomId: Number(assignForm.roomId),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      toast.success("Student assigned to room");
-      setAssignForm({ studentEmail: "", roomId: "" });
-      fetchRooms();
+      if (!assignForm.studentId || !assignForm.roomId) {
+        toast.error("Please select both a student and a room");
+        return;
+      }
+
+      // Debug logs
+      console.log("Assignment Form Values:", {
+        studentId: assignForm.studentId,
+        roomId: assignForm.roomId,
+        studentIdType: typeof assignForm.studentId,
+        roomIdType: typeof assignForm.roomId,
+      });
+
+      setLoading(true);
+      const payload = {
+        studentId: Number(assignForm.studentId),
+        roomId: Number(assignForm.roomId),
+      };
+
+      console.log("Sending payload:", payload);
+
+      const response = await axios.put(`${API_BASE}/rooms/assign`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success(response.data.message || "Student assigned to room");
+      setAssignForm({ studentId: null, roomId: null });
+
+      // Refresh data
+      await Promise.all([fetchRooms(), fetchStudents()]);
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.error || "Failed to assign student to room"
-      );
+      console.error("Assignment error:", err);
+
+      // Detailed error logging
+      if (err.response) {
+        // Server responded with a non-2xx status
+        console.error("Error response data:", err.response.data);
+        console.error("Error response status:", err.response.status);
+        toast.error(
+          err.response.data.error ||
+            `Server error: ${err.response.status} - ${err.response.statusText}` ||
+            "Failed to assign student to room"
+        );
+      } else if (err.request) {
+        // Request made but no response received
+        console.error("No response received:", err.request);
+        toast.error("No response from server. Check your connection.");
+      } else {
+        // Something else happened while setting up the request
+        console.error("Error message:", err.message);
+        toast.error(err.message || "Failed to assign student to room");
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -156,54 +211,109 @@ export default function AdminRooms() {
           <h2 className='font-semibold text-lg mb-2 text-blue-700'>
             Create Room
           </h2>
-          <input
-            type='text'
-            name='roomNumber'
-            placeholder='Room Number'
-            value={form.roomNumber}
-            onChange={(e) => setForm({ ...form, roomNumber: e.target.value })}
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='text'
-            name='block'
-            placeholder='Block'
-            value={form.block}
-            onChange={(e) => setForm({ ...form, block: e.target.value })}
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='number'
-            name='floor'
-            placeholder='Floor (0=Ground, 1=First)'
-            value={form.floor}
-            onChange={(e) =>
-              setForm({ ...form, floor: Number(e.target.value) })
-            }
-            className='w-full p-2 border rounded'
-            required
-          />
-          <input
-            type='text'
-            name='designation'
-            placeholder='Designation (optional)'
-            value={form.designation}
-            onChange={(e) => setForm({ ...form, designation: e.target.value })}
-            className='w-full p-2 border rounded'
-          />
-          <input
-            type='number'
-            name='capacity'
-            placeholder='Capacity'
-            value={form.capacity}
-            onChange={(e) =>
-              setForm({ ...form, capacity: Number(e.target.value) })
-            }
-            className='w-full p-2 border rounded'
-            required
-          />
+          <div className='space-y-1'>
+            <label
+              htmlFor='roomNumber'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Room Number *
+            </label>
+            <input
+              id='roomNumber'
+              type='text'
+              name='roomNumber'
+              value={form.roomNumber}
+              onChange={(e) => setForm({ ...form, roomNumber: e.target.value })}
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              required
+            />
+          </div>
+
+          <div className='space-y-1'>
+            <label
+              htmlFor='block'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Block *
+            </label>
+            <input
+              id='block'
+              type='text'
+              name='block'
+              value={form.block}
+              onChange={(e) => setForm({ ...form, block: e.target.value })}
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              required
+            />
+          </div>
+
+          <div className='space-y-1'>
+            <label
+              htmlFor='floor'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Floor Number *
+            </label>
+            <input
+              id='floor'
+              type='number'
+              name='floor'
+              value={form.floor}
+              min='0'
+              max='10'
+              title='0 for Ground Floor, 1 for First Floor, etc.'
+              onChange={(e) =>
+                setForm({ ...form, floor: Number(e.target.value) })
+              }
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              required
+            />
+            <p className='text-xs text-gray-500 mt-1'>
+              0 = Ground Floor, 1 = First Floor, etc.
+            </p>
+          </div>
+
+          <div className='space-y-1'>
+            <label
+              htmlFor='designation'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Designation
+            </label>
+            <input
+              id='designation'
+              type='text'
+              name='designation'
+              value={form.designation}
+              onChange={(e) =>
+                setForm({ ...form, designation: e.target.value })
+              }
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              placeholder='e.g., Study Room, Storage (Optional)'
+            />
+          </div>
+
+          <div className='space-y-1'>
+            <label
+              htmlFor='capacity'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Room Capacity *
+            </label>
+            <input
+              id='capacity'
+              type='number'
+              name='capacity'
+              value={form.capacity}
+              min='1'
+              max='10'
+              onChange={(e) =>
+                setForm({ ...form, capacity: Number(e.target.value) })
+              }
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              required
+            />
+          </div>
           <select
             name='status'
             value={form.status}
@@ -233,41 +343,100 @@ export default function AdminRooms() {
           <h2 className='font-semibold text-lg mb-2 text-blue-700'>
             Assign Student to Room
           </h2>
-          <select
-            name='studentEmail'
-            value={assignForm.studentEmail}
-            onChange={(e) =>
-              setAssignForm({ ...assignForm, studentEmail: e.target.value })
-            }
-            className='w-full p-2 border rounded'
-            required
-          >
-            <option value=''>Select Student</option>
-            {Array.isArray(students) &&
-              students.map((s) => (
-                <option key={s.id} value={s.email}>
-                  {s.name} ({s.rollNumber})
-                </option>
-              ))}
-          </select>
-          <select
-            name='roomId'
-            value={assignForm.roomId}
-            onChange={(e) =>
-              setAssignForm({ ...assignForm, roomId: e.target.value })
-            }
-            className='w-full p-2 border rounded'
-            required
-          >
-            <option value=''>Select Room</option>
-            {rooms
-              .filter((r) => r.status !== "BLOCKED" && r.status !== "RESERVED")
-              .map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.roomNumber} ({r.block}) - {r.students.length}/{r.capacity}
-                </option>
-              ))}
-          </select>
+          <div className='space-y-1'>
+            <label
+              htmlFor='studentId'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Select Student
+            </label>
+            <select
+              id='studentId'
+              name='studentId'
+              value={assignForm.studentId?.toString() ?? ""}
+              onChange={(e) => {
+                const newValue = e.target.value
+                  ? parseInt(e.target.value, 10)
+                  : null;
+                console.log("Student selection changed:", {
+                  value: e.target.value,
+                  parsed: newValue,
+                  isNaN: isNaN(newValue as number),
+                });
+                setAssignForm({
+                  ...assignForm,
+                  studentId: newValue,
+                });
+              }}
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              required
+            >
+              <option value=''>Choose a student...</option>
+              {Array.isArray(students) &&
+                students
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name} ({student.rollNumber || student.email})
+                      {student.room
+                        ? ` - Current: Room ${student.room.roomNumber} (${student.room.block})`
+                        : " - Unassigned"}
+                    </option>
+                  ))}
+            </select>
+          </div>
+          <div className='space-y-1'>
+            <label
+              htmlFor='roomId'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Select Room
+            </label>
+            <select
+              id='roomId'
+              name='roomId'
+              value={assignForm.roomId?.toString() ?? ""}
+              onChange={(e) => {
+                const newValue = e.target.value
+                  ? parseInt(e.target.value, 10)
+                  : null;
+                console.log("Room selection changed:", {
+                  value: e.target.value,
+                  parsed: newValue,
+                  isNaN: isNaN(newValue as number),
+                });
+                setAssignForm({
+                  ...assignForm,
+                  roomId: newValue,
+                });
+              }}
+              className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              required
+            >
+              <option value=''>Choose a room...</option>
+              {rooms
+                .filter(
+                  (room) =>
+                    room.status !== "BLOCKED" &&
+                    room.status !== "RESERVED" &&
+                    room.students.length < room.capacity &&
+                    (room.status === "AVAILABLE" || room.status === "OCCUPIED")
+                )
+                .sort((a, b) => {
+                  const blockCompare = a.block.localeCompare(b.block);
+                  if (blockCompare !== 0) return blockCompare;
+                  return a.roomNumber.localeCompare(b.roomNumber, undefined, {
+                    numeric: true,
+                  });
+                })
+                .map((room) => (
+                  <option key={room.id} value={room.id}>
+                    Room {room.roomNumber} ({room.block}) -{" "}
+                    {room.students.length}/{room.capacity} occupied
+                  </option>
+                ))}
+            </select>
+          </div>
           <button
             type='submit'
             className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded shadow hover:from-blue-600 hover:to-blue-800 transition'

@@ -59,7 +59,6 @@ async function main() {
           course: i % 2 === 0 ? "BTech" : "MTech",
           fromDate: new Date(`2025-07-0${i + 1}`),
           toDate: new Date(`2025-12-0${i + 1}`),
-          linenIssued: i % 2 === 0 ? "BEDSHEET" : "PILLOW_COVER",
           user: { connect: { id: user.id } },
         },
       })
@@ -71,6 +70,7 @@ async function main() {
   type RoomStatus = "AVAILABLE" | "BLOCKED" | "RESERVED" | "OCCUPIED";
 
   const roomsData = [
+    // A-Wing Rooms
     // Ground Floor (1-21)
     // Workshop Side (1-10)
     ...[1, 3, 4, 6, 7, 8, 9].map((num) => ({
@@ -78,7 +78,7 @@ async function main() {
       block: "A-Wing",
       floor: 0,
       designation: null,
-      capacity: 3,
+      capacity: 1,
       status: "AVAILABLE" as RoomStatus,
     })),
     {
@@ -121,7 +121,7 @@ async function main() {
       block: "A-Wing",
       floor: 0,
       designation: null,
-      capacity: 3,
+      capacity: 1,
       status: "AVAILABLE" as RoomStatus,
     })),
     {
@@ -148,7 +148,7 @@ async function main() {
       block: "A-Wing",
       floor: 1,
       designation: null,
-      capacity: 3,
+      capacity: 1,
       status: "AVAILABLE" as RoomStatus,
     })),
     // Toilet on First Floor
@@ -174,7 +174,7 @@ async function main() {
       block: "A-Wing",
       floor: 1,
       designation: null,
-      capacity: 3,
+      capacity: 1,
       status: "AVAILABLE" as RoomStatus,
     })),
     // Bathroom on First Floor
@@ -185,6 +185,387 @@ async function main() {
       designation: "bathroom",
       capacity: 0,
       status: "BLOCKED" as RoomStatus,
+    },
+
+    // B-Wing Rooms based on the floor plan
+    // B-Wing Ground Floor (44-62)
+    // Regular rooms on Ground Floor (4 beds each)
+    ...[45, 46, 47, 48, 50, 51, 52, 55, 57, 58, 59, 60, 61].map((num) => ({
+      roomNumber: String(num),
+      block: "B-Wing",
+      floor: 0,
+      designation: null,
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    })),
+    // Special purpose rooms on Ground Floor
+    {
+      roomNumber: "44",
+      block: "B-Wing",
+      floor: 0,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "49",
+      block: "B-Wing",
+      floor: 0,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "53",
+      block: "B-Wing",
+      floor: 0,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "54",
+      block: "B-Wing",
+      floor: 0,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "56",
+      block: "B-Wing",
+      floor: 0,
+      designation: "GYM",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "62",
+      block: "B-Wing",
+      floor: 0,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    // Toilets and Bathrooms on Ground Floor
+    {
+      roomNumber: "B-G-2",
+      block: "B-Wing",
+      floor: 0,
+      designation: "bathroom",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "B-G-3",
+      block: "B-Wing",
+      floor: 0,
+      designation: "bathroom",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "T-G-2",
+      block: "B-Wing",
+      floor: 0,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "T-G-3",
+      block: "B-Wing",
+      floor: 0,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    // Common Room
+    {
+      roomNumber: "CR-1",
+      block: "B-Wing",
+      floor: 0,
+      designation: "Common Room",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // B-Wing First Floor (63-86)
+    // Regular rooms on First Floor (4 beds each) - corrected sequence based on floor plan
+    ...[
+      // Bathroom side rooms
+      63, 64, 65, 66, 67, 68,
+      // Electric store area
+      69, 70, 71, 72, 73,
+      // Store room side (in sequence)
+      75, 76, 77, 78, 79, 80,
+      // Toilet side rooms (in reverse sequence for proper layout)
+      // These will be overridden by individual room definitions below
+      // 86, 85, 84,
+    ].map((num) => ({
+      roomNumber: String(num),
+      block: "B-Wing",
+      floor: 1,
+      designation: null,
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    })),
+    // Special purpose rooms on First Floor
+    {
+      roomNumber: "74",
+      block: "B-Wing",
+      floor: 1,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    // Dormitory rooms (same 4-bed capacity as regular rooms) - in sequence based on floor plan
+    {
+      roomNumber: "83",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Dormitory",
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    {
+      roomNumber: "82",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Dormitory",
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    {
+      roomNumber: "81",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Dormitory",
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    // Electric Store
+    {
+      roomNumber: "ES-1",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Electric store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    // Special purpose rooms - in reverse sequence for proper layout
+    {
+      roomNumber: "86",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Staff",
+      capacity: 1,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    {
+      roomNumber: "85",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Warden",
+      capacity: 1,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    {
+      roomNumber: "84",
+      block: "B-Wing",
+      floor: 1,
+      designation: "Guest",
+      capacity: 2,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    // Toilets and Bathrooms on First Floor
+    {
+      roomNumber: "B-F-2",
+      block: "B-Wing",
+      floor: 1,
+      designation: "bathroom",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "B-F-3",
+      block: "B-Wing",
+      floor: 1,
+      designation: "bathroom",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "T-F-2",
+      block: "B-Wing",
+      floor: 1,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "T-F-3",
+      block: "B-Wing",
+      floor: 1,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // C-Wing Rooms based on the floor plan
+    // C-Wing Ground Floor (87-98 plus special rooms)
+    // Workshop Side (87-92) - in sequence
+    ...[87, 88, 89, 90, 91, 92].map((num) => ({
+      roomNumber: String(num),
+      block: "C-Wing",
+      floor: 0,
+      designation: null,
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    })),
+
+    // Stairs
+    {
+      roomNumber: "C-S-G",
+      block: "C-Wing",
+      floor: 0,
+      designation: "stairs",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // Store
+    {
+      roomNumber: "C-ST-G",
+      block: "C-Wing",
+      floor: 0,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // STC Side (93-98) - in sequence
+    ...[93, 94, 95, 96, 97, 98].map((num) => ({
+      roomNumber: String(num),
+      block: "C-Wing",
+      floor: 0,
+      designation: null,
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    })),
+
+    // Toilets on Ground Floor
+    {
+      roomNumber: "C-T-G-1",
+      block: "C-Wing",
+      floor: 0,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "C-T-G-2",
+      block: "C-Wing",
+      floor: 0,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // VIP Rooms on Ground Floor
+    {
+      roomNumber: "99",
+      block: "C-Wing",
+      floor: 0,
+      designation: "VIP",
+      capacity: 2,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    {
+      roomNumber: "100",
+      block: "C-Wing",
+      floor: 0,
+      designation: "VIP",
+      capacity: 2,
+      status: "AVAILABLE" as RoomStatus,
+    },
+
+    // C-Wing First Floor (101-114 plus special rooms)
+    // Workshop Side (101-106) - in sequence
+    // Note: Rooms 101-105 are part of Ladies Wing
+    ...[101, 102, 103, 104, 105, 106].map((num) => ({
+      roomNumber: String(num),
+      block: "C-Wing",
+      floor: 1,
+      designation: "Ladies wing",
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    })),
+
+    // Stairs on First Floor
+    {
+      roomNumber: "C-S-F",
+      block: "C-Wing",
+      floor: 1,
+      designation: "stairs",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // Store on First Floor
+    {
+      roomNumber: "C-ST-F",
+      block: "C-Wing",
+      floor: 1,
+      designation: "store",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // STC Side (107-112) - in sequence
+    ...[107, 108, 109, 110, 111, 112].map((num) => ({
+      roomNumber: String(num),
+      block: "C-Wing",
+      floor: 1,
+      designation: null,
+      capacity: 4,
+      status: "AVAILABLE" as RoomStatus,
+    })),
+
+    // Toilets on First Floor
+    {
+      roomNumber: "C-T-F-1",
+      block: "C-Wing",
+      floor: 1,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+    {
+      roomNumber: "C-T-F-2",
+      block: "C-Wing",
+      floor: 1,
+      designation: "toilet",
+      capacity: 0,
+      status: "BLOCKED" as RoomStatus,
+    },
+
+    // VIP Rooms on First Floor
+    {
+      roomNumber: "113",
+      block: "C-Wing",
+      floor: 1,
+      designation: "VIP",
+      capacity: 2,
+      status: "AVAILABLE" as RoomStatus,
+    },
+    {
+      roomNumber: "114",
+      block: "C-Wing",
+      floor: 1,
+      designation: "VIP",
+      capacity: 2,
+      status: "AVAILABLE" as RoomStatus,
     },
   ];
 

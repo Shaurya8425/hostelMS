@@ -1,11 +1,11 @@
 // src/pages/AdminDashboard.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../api/axiosInstance";
 import { toast } from "react-toastify";
 import RoomDiagram from "../../components/RoomDiagram";
 import Spinner from "../../components/Spinner";
-import { API_BASE } from "../../api/apiBase";
+
 import { getLinenInventory } from "../../api/linenApi";
 import {
   Chart as ChartJS,
@@ -53,34 +53,44 @@ function AdminDashboard() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
+      console.log("Fetching dashboard data...");
+      // Fetch all data in parallel
+      const [studentsRes, roomsRes, leavesRes, complaintsRes, linenRes] =
+        await Promise.all([
+          axiosInstance.get("/students"),
+          axiosInstance.get("/rooms"),
+          axiosInstance.get("/leaves"),
+          axiosInstance.get("/complaints"),
+          getLinenInventory(),
+        ]).catch((error) => {
+          console.error("API Error:", error.response?.data || error.message);
+          throw error;
+        });
 
-      const [students, rooms, leaves, complaints] = await Promise.all([
-        axios.get(`${API_BASE}/students`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API_BASE}/rooms`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API_BASE}/leaves`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API_BASE}/complaints`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+      console.log("API Responses:", {
+        students: studentsRes.data,
+        rooms: roomsRes.data,
+        leaves: leavesRes.data,
+        complaints: complaintsRes.data,
+        linen: linenRes,
+      });
 
       // Calculate total and occupied beds
-      const roomsData = rooms.data;
+      // Get room data from response
+      const roomsData = Array.isArray(roomsRes.data)
+        ? roomsRes.data
+        : roomsRes.data.data || [];
+      console.log("Room data:", roomsData);
+
+      // Calculate bed stats
       const totalBeds = roomsData.reduce(
-        (acc: number, room: any) => acc + room.capacity,
+        (acc: number, room: any) => acc + (Number(room.capacity) || 0),
         0
       );
       const occupiedBeds = roomsData.reduce(
-        (acc: number, room: any) => acc + (room.students?.length || 0),
+        (acc: number, room: any) =>
+          acc +
+          ((Array.isArray(room.students) ? room.students.length : 0) || 0),
         0
       );
 
@@ -89,38 +99,45 @@ function AdminDashboard() {
         occupiedBeds,
       });
 
+      // Set dashboard stats
       setStats({
-        students: students.data.totalItems,
+        students:
+          studentsRes.data.meta?.totalItems ||
+          (Array.isArray(studentsRes.data.data)
+            ? studentsRes.data.data.length
+            : 0),
         rooms: roomsData.length,
-        leaves: leaves.data.data.length,
-        complaints: complaints.data.data.length,
+        leaves: Array.isArray(leavesRes.data.data)
+          ? leavesRes.data.data.length
+          : 0,
+        complaints: Array.isArray(complaintsRes.data.data)
+          ? complaintsRes.data.data.length
+          : 0,
       });
 
-      // Fetch linen inventory
-      try {
-        const linenData = await getLinenInventory();
-        setLinen({
-          bedsheet: {
-            total: linenData.bedsheet || 0,
-            active: linenData.bedsheetActive || 0,
-            inHand: linenData.bedsheetInHand || 0,
-          },
-          pillowCover: {
-            total: linenData.pillowCover || 0,
-            active: linenData.pillowActive || 0,
-            inHand: linenData.pillowInHand || 0,
-          },
-          blanket: {
-            total: linenData.blanket || 0,
-            active: linenData.blanketActive || 0,
-            inHand: linenData.blanketInHand || 0,
-          },
-        });
-      } catch (e) {
-        setLinen(null);
-      }
-    } catch (error) {
-      toast.error("Failed to fetch dashboard data");
+      // Update linen inventory
+      setLinen({
+        bedsheet: {
+          total: linenRes.bedsheet || 0,
+          active: linenRes.bedsheetActive || 0,
+          inHand: linenRes.bedsheetInHand || 0,
+        },
+        pillowCover: {
+          total: linenRes.pillowCover || 0,
+          active: linenRes.pillowActive || 0,
+          inHand: linenRes.pillowInHand || 0,
+        },
+        blanket: {
+          total: linenRes.blanket || 0,
+          active: linenRes.blanketActive || 0,
+          inHand: linenRes.blanketInHand || 0,
+        },
+      });
+    } catch (error: any) {
+      console.error("Dashboard Error:", error.response?.data || error.message);
+      toast.error(
+        error.response?.data?.error || "Failed to fetch dashboard data"
+      );
       setStats({});
       setLinen(null);
     } finally {
@@ -392,9 +409,9 @@ function AdminDashboard() {
                         {
                           data: linen
                             ? [
-                                linen.bedsheet.inHand,
-                                linen.pillowCover.inHand,
-                                linen.blanket.inHand,
+                                linen.bedsheet.total,
+                                linen.pillowCover.total,
+                                linen.blanket.total,
                               ]
                             : [],
                           backgroundColor: ["#60a5fa", "#34d399", "#f472b6"],
@@ -415,9 +432,9 @@ function AdminDashboard() {
                               const label = context.label || "";
                               const value = context.raw || 0;
                               const total = linen
-                                ? linen.bedsheet.inHand +
-                                  linen.pillowCover.inHand +
-                                  linen.blanket.inHand
+                                ? linen.bedsheet.total +
+                                  linen.pillowCover.total +
+                                  linen.blanket.total
                                 : 0;
                               const percentage =
                                 total > 0

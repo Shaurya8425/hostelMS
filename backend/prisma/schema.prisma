@@ -24,17 +24,14 @@ model Student {
   name            String
   email           String      @unique
   phone           String
-  // branch removed
-  // year removed
-  // rollNumber removed
   gender          Gender
   division        String? // Now optional
   course          String? // Now optional
   fromDate        DateTime? // Now optional
   toDate          DateTime? // Now optional
-  bedsheetIssued  Boolean     @default(false)
-  pillowIssued    Boolean     @default(false)
-  blanketIssued   Boolean     @default(false)
+  bedsheetCount   Int         @default(0)
+  pillowCount     Int         @default(0)
+  blanketCount    Int         @default(0)
   linenIssuedDate DateTime?
   roomId          Int?
   createdAt       DateTime    @default(now())

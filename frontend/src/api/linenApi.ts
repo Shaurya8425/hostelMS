@@ -1,21 +1,32 @@
-import axios from "axios";
-import { API_BASE } from "./apiBase";
+import axiosInstance from "./axiosInstance";
 
 export const getLinenInventory = async () => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`${API_BASE}/linen/inventory`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
+  try {
+    const res = await axiosInstance.get("/linen/inventory");
+    console.log("Linen inventory response:", res.data);
+    return res.data;
+  } catch (error: any) {
+    console.error(
+      "Error fetching linen inventory:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
 };
 
 export const updateLinenInventory = async (data: {
   bedsheet: number;
   pillowCover: number;
+  blanket?: number;
 }) => {
-  const token = localStorage.getItem("token");
-  const res = await axios.put(`${API_BASE}/linen/inventory`, data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
+  try {
+    const res = await axiosInstance.put("/linen/inventory", data);
+    return res.data;
+  } catch (error: any) {
+    console.error(
+      "Error updating linen inventory:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
 };

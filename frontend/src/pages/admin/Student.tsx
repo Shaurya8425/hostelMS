@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../../api/axiosInstance"; // Import the configured instance
 import { toast } from "react-toastify";
 import { API_BASE } from "../../api/apiBase";
 import SkeletonStudents from "../../components/skeleton/admin/SkeletonStudents";
@@ -7,24 +7,26 @@ import bed from "../../assets/bed-svgrepo-com.svg";
 import pillow from "../../assets/pillow-svgrepo-com.svg";
 import blankie from "../../assets/blanket-svgrepo-com.svg";
 
-
 interface Student {
   id: number;
   name: string;
   email: string;
   phone: string;
   gender: "MALE" | "FEMALE" | "OTHER";
-  division?: string | null;
-  course?: string | null;
-  fromDate?: string | null;
-  toDate?: string | null;
+  division: string | null;
+  course: string | null;
+  fromDate: string | null;
+  toDate: string | null;
   bedsheetCount: number;
   pillowCount: number;
   blanketCount: number;
-  linenInventory?: {
-    bedsheets: number;
-    pillows: number;
-    blankets: number;
+  linenIssuedDate: string | null;
+  room: any; // Add proper type if needed
+  complaints: any[]; // Add proper type if needed
+  leaves: any[]; // Add proper type if needed
+  user: {
+    email: string;
+    role: string;
   };
 }
 
@@ -34,19 +36,35 @@ export default function AdminStudents() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [form, setForm] = useState({
+  interface StudentForm {
+    name: string;
+    email: string;
+    phone: string;
+    gender: "MALE" | "FEMALE" | "OTHER";
+    division: string;
+    course: string;
+    fromDate: string;
+    toDate: string;
+    bedsheetCount: number;
+    pillowCount: number;
+    blanketCount: number;
+  }
+
+  const defaultForm: StudentForm = {
     name: "",
     email: "",
     phone: "",
-    gender: "MALE" as "MALE" | "FEMALE" | "OTHER",
+    gender: "MALE",
     division: "",
     course: "",
     fromDate: "",
     toDate: "",
-    bedsheetCount: 1,
-    pillowCount: 2,
+    bedsheetCount: 1, // Default 1 bedsheet
+    pillowCount: 2, // Default 2 pillows
     blanketCount: 0,
-  });
+  };
+
+  const [form, setForm] = useState<StudentForm>(defaultForm);
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -57,8 +75,8 @@ export default function AdminStudents() {
     course: "",
     fromDate: "",
     toDate: "",
-    bedsheetCount: 1,
-    pillowCount: 2,
+    bedsheetCount: 0,
+    pillowCount: 0,
     blanketCount: 0,
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -66,79 +84,297 @@ export default function AdminStudents() {
   const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(true);
 
+  // Function to validate JWT token format
+  const isValidToken = (token: string | null): boolean => {
+    if (!token) return false;
+
+    // Simple check for JWT format (three parts separated by dots)
+    const parts = token.split(".");
+    return parts.length === 3;
+  };
+
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE}/students?search=${search}&page=${page}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      console.log(
+        "Fetching students with token:",
+        token ? token.substring(0, 15) + "..." : "No token"
       );
-      setStudents(res.data.data);
-      setTotalPages(res.data.totalPages);
-    } catch (err) {
-      toast.error("Failed to fetch students");
+
+      if (!token || !isValidToken(token)) {
+        toast.error(
+          "Authentication token missing or invalid. Please log in again."
+        );
+        return;
+      }
+
+      const res = await axiosInstance.get(
+        `/students?search=${search}&page=${page}`
+      );
+
+      console.log("Student data from API:", res.data);
+      setStudents(res.data.data || []);
+      setTotalPages(res.data.totalPages || 1);
+    } catch (err: any) {
+      console.error("Error fetching students:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+
+      toast.error(
+        "Failed to fetch students: " +
+          (err.response?.data?.error || err.message)
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  // Hook to check token on component mount
+  useEffect(() => {
+    // Check if token exists and is valid
+    if (!token) {
+      toast.error("You need to log in to access this page", {
+        toastId: "login-required",
+      });
+      // You might want to redirect to login page here
+      // window.location.href = "/login";
+    } else {
+      // Verify token by making an auth check request
+      const verifyToken = async () => {
+        try {
+          await axiosInstance.get(`/auth/me`);
+          // Token is valid, no action needed
+        } catch (err) {
+          // Token is invalid or expired
+          toast.error("Your session has expired. Please log in again", {
+            toastId: "token-expired",
+          });
+          localStorage.removeItem("token");
+          // window.location.href = "/login";
+        }
+      };
+      verifyToken();
+    }
+  }, [token]);
 
   useEffect(() => {
     fetchStudents();
     // eslint-disable-next-line
   }, [search, page]);
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
-        ...form,
-        division: form.division || null,
-        course: form.course || null,
-        fromDate: form.fromDate || null,
-        toDate: form.toDate || null,
-        bedsheetCount: form.bedsheetCount,
-        pillowCount: form.pillowCount,
-        blanketCount: form.blanketCount,
-        linenInventory: {
-          bedsheets: form.bedsheetCount,
-          pillows: form.pillowCount,
-          blankets: form.blanketCount,
-        },
-      };
-      if (!token) {
-        toast.error("You must be logged in to add a student");
+      setSubmitting(true);
+
+      if (!token || !isValidToken(token)) {
+        toast.error(
+          "You must be logged in with a valid session to add a student"
+        );
         return;
       }
 
-      await axios.post(`${API_BASE}/students`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      // Display the token for debugging (remove this in production)
+      console.log(
+        "Using token:",
+        token ? token.substring(0, 15) + "..." : "No token"
+      );
+
+      // Basic validation
+      if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email.trim())) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+
+      // Phone validation
+      if (!/^\d{10}$/.test(form.phone.trim())) {
+        toast.error("Please enter a valid 10-digit phone number");
+        return;
+      }
+
+      // Date validation
+      if (form.fromDate && form.toDate) {
+        const fromDate = new Date(form.fromDate);
+        const toDate = new Date(form.toDate);
+        if (fromDate > toDate) {
+          toast.error("From date cannot be after To date");
+          return;
+        }
+      }
+
+      // Check if email already exists as a user
+      try {
+        console.log(`Checking if email ${form.email.trim()} already exists...`);
+        const checkResponse = await axiosInstance.get(
+          `/students/check-email?email=${encodeURIComponent(form.email.trim())}`
+        );
+
+        console.log("Email check response:", checkResponse.data);
+
+        if (checkResponse.data?.exists) {
+          toast.error(
+            "A user with this email already exists. Please use a different email address."
+          );
+          return;
+        }
+      } catch (checkError: any) {
+        // Log error details
+        console.error("Email check error:", {
+          error: checkError,
+          response: checkError.response?.data,
+          status: checkError.response?.status,
+        });
+
+        // If the error is due to authorization or the endpoint doesn't exist,
+        // we'll continue with student creation and let the backend handle any duplicate emails
+        if (
+          checkError.response?.status === 403 ||
+          checkError.response?.status === 404
+        ) {
+          console.log("Continuing despite email check error");
+        } else {
+          toast.error(
+            "Error checking email availability: " +
+              (checkError.response?.data?.error || checkError.message)
+          );
+          return;
+        }
+      }
+
+      // Build payload with proper validation
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(), // Ensure email is lowercase
+        phone: form.phone.trim().replace(/\D/g, ""), // Remove any non-digit characters
+        gender: form.gender,
+        division: form.division.trim() || null,
+        course: form.course.trim() || null,
+        fromDate: form.fromDate ? new Date(form.fromDate).toISOString() : null,
+        toDate: form.toDate ? new Date(form.toDate).toISOString() : null,
+        bedsheetCount: Math.max(
+          0,
+          Math.min(5, Number(form.bedsheetCount) || 0)
+        ),
+        pillowCount: Math.max(0, Math.min(5, Number(form.pillowCount) || 0)),
+        blanketCount: Math.max(0, Math.min(5, Number(form.blanketCount) || 0)),
+        linenIssuedDate:
+          Number(form.bedsheetCount) > 0 ||
+          Number(form.pillowCount) > 0 ||
+          Number(form.blanketCount) > 0
+            ? new Date().toISOString()
+            : null,
+      };
+
+      console.log("Sending payload:", JSON.stringify(payload, null, 2));
+
+      // Add debug info for API base URL
+      console.log("API Base URL:", API_BASE);
+
+      // Function to retry API call in case of network errors
+      const makeApiCall = async (retries = 2) => {
+        try {
+          return await axiosInstance.post(`/students`, payload, {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+        } catch (err: any) {
+          // If it's a network error and we have retries left, try again
+          if (!err.response && retries > 0) {
+            console.log(
+              `Network error, retrying... (${retries} attempts left)`
+            );
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+            return makeApiCall(retries - 1);
+          }
+          throw err; // Re-throw if it's not a network error or no retries left
+        }
+      };
+
+      const response = await makeApiCall();
+
+      console.log("Student creation response:", response.data);
+
+      if (response.data) {
+        toast.success("Student added successfully");
+        setShowAddForm(false);
+        await fetchStudents();
+        setForm(defaultForm);
+      }
+    } catch (error: any) {
+      console.error("Add student error details:", {
+        error: error,
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
       });
-      toast.success("Student added successfully");
-      setShowAddForm(false);
-      fetchStudents();
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        gender: "MALE",
-        division: "",
-        course: "",
-        fromDate: "",
-        toDate: "",
-        bedsheetCount: 1,
-        pillowCount: 2,
-        blanketCount: 0,
-      });
-    } catch (err: any) {
-      console.error("Error adding student:", err);
-      const errorMessage =
-        err.response?.data?.message || "Failed to add student";
-      toast.error(errorMessage);
+
+      // Handle different types of errors
+      if (!error.response) {
+        // Network error or server not responding
+        toast.error(
+          "Cannot connect to the server. Please check your internet connection or try again later."
+        );
+      } else if (error.response?.status === 400) {
+        // Bad request - typically validation errors
+        const errorMessage =
+          error.response.data?.error ||
+          error.response.data?.details ||
+          "Invalid student data";
+
+        // Show more specific error for linen inventory issues
+        if (errorMessage.includes("Not enough linen")) {
+          const available = error.response.data?.available;
+          if (available) {
+            toast.error(
+              `Not enough linen in inventory. Available: ${available.bedsheets} bedsheets, ${available.pillowCovers} pillows, ${available.blankets} blankets.`
+            );
+          } else {
+            toast.error(
+              "Not enough linen available in inventory. Please adjust the allocation."
+            );
+          }
+        } else if (
+          errorMessage.includes("already exists") ||
+          errorMessage.includes("user not found") ||
+          errorMessage.includes("unique constraint") ||
+          errorMessage.includes("duplicate")
+        ) {
+          toast.error(
+            "A user with this email already exists. Please use a different email address."
+          );
+        } else {
+          toast.error(errorMessage);
+        }
+      } else if (error.response?.status === 401) {
+        // Unauthorized
+        toast.error("Session expired. Please login again.");
+        // You might want to redirect to login here
+      } else if (error.response?.status === 403) {
+        // Forbidden
+        toast.error("You don't have permission to add students");
+      } else {
+        // General error
+        toast.error(
+          error.response?.data?.error ||
+            error.response?.data?.details ||
+            "Failed to add student"
+        );
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -146,9 +382,25 @@ export default function AdminStudents() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
-    // Convert to number for number inputs
-    const newValue = type === "number" ? Number(value) : value;
-    setForm({ ...form, [name]: newValue });
+
+    let processedValue: string | number = value;
+
+    if (type === "number") {
+      // Ensure number inputs are within valid ranges
+      const numValue = parseInt(value) || 0;
+      if (name === "blanketCount") {
+        processedValue = Math.max(0, Math.min(1, numValue));
+      } else if (name === "bedsheetCount" || name === "pillowCount") {
+        processedValue = Math.max(0, Math.min(2, numValue));
+      } else {
+        processedValue = numValue;
+      }
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: processedValue,
+    }));
   };
 
   // Inline edit handlers
@@ -163,41 +415,68 @@ export default function AdminStudents() {
       course: student.course || "",
       fromDate: student.fromDate || "",
       toDate: student.toDate || "",
-      bedsheetCount:
-        student.linenInventory?.bedsheets || student.bedsheetCount || 1,
-      pillowCount: student.linenInventory?.pillows || student.pillowCount || 2,
-      blanketCount:
-        student.linenInventory?.blankets || student.blanketCount || 0,
+      bedsheetCount: student.bedsheetCount,
+      pillowCount: student.pillowCount,
+      blanketCount: student.blanketCount,
     });
   };
 
   const handleEditFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type } = e.target;
-    // Convert to number for number inputs
-    const newValue = type === "number" ? Number(value) : value;
-    setEditForm({ ...editForm, [name]: newValue });
+    const target = e.target as HTMLInputElement;
+    const { name, value, type } = target;
+
+    if (type === "checkbox") {
+      setEditForm({ ...editForm, [name]: target.checked });
+    } else if (type === "date") {
+      // Ensure empty dates are null
+      setEditForm({ ...editForm, [name]: value || null });
+    } else {
+      setEditForm({ ...editForm, [name]: value });
+    }
   };
 
   const handleEditSave = async (id: number) => {
     try {
+      // Process dates and create the payload
       const payload = {
         ...editForm,
-        linenInventory: {
-          bedsheets: editForm.bedsheetCount,
-          pillows: editForm.pillowCount,
-          blankets: editForm.blanketCount,
-        },
+        division: editForm.division || null,
+        course: editForm.course || null,
+        // Ensure dates are properly formatted
+        fromDate: editForm.fromDate
+          ? new Date(editForm.fromDate).toISOString()
+          : null,
+        toDate: editForm.toDate
+          ? new Date(editForm.toDate).toISOString()
+          : null,
+        bedsheetCount: Math.max(
+          0,
+          Math.min(5, Number(editForm.bedsheetCount) || 0)
+        ),
+        pillowCount: Math.max(
+          0,
+          Math.min(5, Number(editForm.pillowCount) || 0)
+        ),
+        blanketCount: Math.max(
+          0,
+          Math.min(5, Number(editForm.blanketCount) || 0)
+        ),
+        linenIssuedDate:
+          editForm.bedsheetCount > 0 ||
+          editForm.pillowCount > 0 ||
+          editForm.blanketCount > 0
+            ? new Date().toISOString()
+            : null,
       };
       if (!token) {
         toast.error("You must be logged in to update a student");
         return;
       }
 
-      await axios.put(`${API_BASE}/students/${id}`, payload, {
+      await axiosInstance.put(`/students/${id}`, payload, {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
@@ -224,15 +503,55 @@ export default function AdminStudents() {
   const handleDeleteConfirm = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`${API_BASE}/students/${deleteId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Student deleted");
+      // First, get the student data to know how many linens to return
+      const studentToDelete = students.find((s) => s.id === deleteId);
+
+      if (!studentToDelete) {
+        toast.error("Student not found");
+        setShowDeleteModal(false);
+        setDeleteId(null);
+        return;
+      }
+
+      // Delete the student
+      await axiosInstance.delete(`/students/${deleteId}`);
+
+      // If student had any linen items, return them to inventory
+      if (
+        studentToDelete.bedsheetCount > 0 ||
+        studentToDelete.pillowCount > 0 ||
+        studentToDelete.blanketCount > 0
+      ) {
+        // Get current inventory
+        const inventoryRes = await axiosInstance.get("/linen/inventory");
+        const inventory = inventoryRes.data;
+
+        // Calculate new inventory values
+        const updatedInventory = {
+          bedsheetInHand:
+            inventory.bedsheetInHand + studentToDelete.bedsheetCount,
+          bedsheetActive:
+            inventory.bedsheetActive - studentToDelete.bedsheetCount,
+          pillowInHand: inventory.pillowInHand + studentToDelete.pillowCount,
+          pillowActive: inventory.pillowActive - studentToDelete.pillowCount,
+          blanketInHand: inventory.blanketInHand + studentToDelete.blanketCount,
+          blanketActive: inventory.blanketActive - studentToDelete.blanketCount,
+        };
+
+        // Update the inventory
+        await axiosInstance.put("/linen/inventory", updatedInventory);
+
+        toast.success("Student deleted and linens returned to inventory");
+      } else {
+        toast.success("Student deleted");
+      }
+
       setShowDeleteModal(false);
       setDeleteId(null);
       fetchStudents(); // Refresh the list
     } catch (err) {
-      toast.error("Failed to delete");
+      console.error("Error deleting student:", err);
+      toast.error("Failed to delete student");
       setShowDeleteModal(false);
       setDeleteId(null);
     }
@@ -249,7 +568,7 @@ export default function AdminStudents() {
     <div className='p-2 sm:p-4'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4'>
         <h1 className='text-2xl sm:text-3xl font-extrabold text-blue-900'>
-          agement
+          Student management
         </h1>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
@@ -391,12 +710,12 @@ export default function AdminStudents() {
                     type='number'
                     name='bedsheetCount'
                     min='0'
-                    max='2'
+                    max='5'
                     value={form.bedsheetCount}
                     onChange={handleChange}
-                    className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    className='w-24 p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                   />
-                  <span className='text-sm text-gray-500'>Max: 2</span>
+                  <span className='text-sm text-gray-500'>Max: 5</span>
                 </div>
               </div>
 
@@ -409,12 +728,12 @@ export default function AdminStudents() {
                     type='number'
                     name='pillowCount'
                     min='0'
-                    max='4'
+                    max='5'
                     value={form.pillowCount}
                     onChange={handleChange}
-                    className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    className='w-24 p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                   />
-                  <span className='text-sm text-gray-500'>Max: 4</span>
+                  <span className='text-sm text-gray-500'>Max: 5</span>
                 </div>
               </div>
 
@@ -427,12 +746,12 @@ export default function AdminStudents() {
                     type='number'
                     name='blanketCount'
                     min='0'
-                    max='2'
+                    max='5'
                     value={form.blanketCount}
                     onChange={handleChange}
-                    className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    className='w-24 p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                   />
-                  <span className='text-sm text-gray-500'>Max: 2</span>
+                  <span className='text-sm text-gray-500'>Max: 5</span>
                 </div>
               </div>
             </div>
@@ -448,9 +767,36 @@ export default function AdminStudents() {
             </button>
             <button
               type='submit'
-              className='px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-800 transition'
+              disabled={submitting}
+              className='px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-800 transition disabled:opacity-50 flex items-center justify-center'
             >
-              Add Student
+              {submitting ? (
+                <>
+                  <svg
+                    className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                  >
+                    <circle
+                      className='opacity-25'
+                      cx='12'
+                      cy='12'
+                      r='10'
+                      stroke='currentColor'
+                      strokeWidth='4'
+                    ></circle>
+                    <path
+                      className='opacity-75'
+                      fill='currentColor'
+                      d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                    ></path>
+                  </svg>
+                  Adding Student...
+                </>
+              ) : (
+                "Add Student"
+              )}
             </button>
           </div>
         </form>
@@ -552,10 +898,10 @@ export default function AdminStudents() {
                             type='number'
                             name='bedsheetCount'
                             min='0'
-                            max='2'
+                            max='5'
                             value={editForm.bedsheetCount}
                             onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                            className='w-24 p-1 border rounded'
                           />
                         </div>
                         <div>
@@ -566,10 +912,10 @@ export default function AdminStudents() {
                             type='number'
                             name='pillowCount'
                             min='0'
-                            max='4'
+                            max='5'
                             value={editForm.pillowCount}
                             onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                            className='w-24 p-1 border rounded'
                           />
                         </div>
                         <div>
@@ -580,10 +926,10 @@ export default function AdminStudents() {
                             type='number'
                             name='blanketCount'
                             min='0'
-                            max='2'
+                            max='5'
                             value={editForm.blanketCount}
                             onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                            className='w-24 p-1 border rounded'
                           />
                         </div>
                       </div>
@@ -630,27 +976,58 @@ export default function AdminStudents() {
                     <td className='p-2'>
                       <div className='space-y-1'>
                         <div className='flex items-center gap-2'>
-                          <span className='text-sm text-gray-600'><img className="w-4" src={bed} alt="" /></span>
+                          <span className='text-sm text-gray-600'>
+                            <img className='w-4' src={bed} alt='' />
+                          </span>
                           <span className='font-medium'>Bedsheets:</span>
-                          <span className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs'>
-                            {s.linenInventory?.bedsheets ||
-                              s.bedsheetCount ||
-                              1}
-                          </span>
+                          <div className='flex flex-col'>
+                            <span className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs'>
+                              {s.bedsheetCount} issued
+                            </span>
+                            <span className='text-xs text-gray-500 mt-1'>
+                              {s.linenIssuedDate
+                                ? `Last updated: ${new Date(
+                                    s.linenIssuedDate
+                                  ).toLocaleDateString()}`
+                                : "None issued"}
+                            </span>
+                          </div>
                         </div>
                         <div className='flex items-center gap-2'>
-                          <span className='text-sm text-gray-600'><img className="w-4" src={pillow} alt="" /></span>
+                          <span className='text-sm text-gray-600'>
+                            <img className='w-4' src={pillow} alt='' />
+                          </span>
                           <span className='font-medium'>Pillows:</span>
-                          <span className='bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs'>
-                            {s.linenInventory?.pillows || s.pillowCount || 2}
-                          </span>
+                          <div className='flex flex-col'>
+                            <span className='bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs'>
+                              {s.pillowCount} issued
+                            </span>
+                            <span className='text-xs text-gray-500 mt-1'>
+                              {s.linenIssuedDate
+                                ? `Last updated: ${new Date(
+                                    s.linenIssuedDate
+                                  ).toLocaleDateString()}`
+                                : "None issued"}
+                            </span>
+                          </div>
                         </div>
                         <div className='flex items-center gap-2'>
-                          <span className='text-sm text-gray-600'><img className="w-4" src={blankie} alt="" /></span>
-                          <span className='font-medium'>Blankets:</span>
-                          <span className='bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs'>
-                            {s.linenInventory?.blankets || s.blanketCount || 0}
+                          <span className='text-sm text-gray-600'>
+                            <img className='w-4' src={blankie} alt='' />
                           </span>
+                          <span className='font-medium'>Blankets:</span>
+                          <div className='flex flex-col'>
+                            <span className='bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs'>
+                              {s.blanketCount} issued
+                            </span>
+                            <span className='text-xs text-gray-500 mt-1'>
+                              {s.linenIssuedDate
+                                ? `Last updated: ${new Date(
+                                    s.linenIssuedDate
+                                  ).toLocaleDateString()}`
+                                : "None issued"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -766,7 +1143,7 @@ export default function AdminStudents() {
                           type='number'
                           name='bedsheetCount'
                           min='0'
-                          max='2'
+                          max='5'
                           value={editForm.bedsheetCount}
                           onChange={handleEditFormChange}
                           className='p-1 border rounded w-full'
@@ -780,7 +1157,7 @@ export default function AdminStudents() {
                           type='number'
                           name='pillowCount'
                           min='0'
-                          max='4'
+                          max='5'
                           value={editForm.pillowCount}
                           onChange={handleEditFormChange}
                           className='p-1 border rounded w-full'
@@ -845,18 +1222,9 @@ export default function AdminStudents() {
                     </span>
                     <span className='font-semibold'>Linen Inventory:</span>
                     <div>
-                      <div>
-                        Bedsheets:{" "}
-                        {s.linenInventory?.bedsheets || s.bedsheetCount || 1}
-                      </div>
-                      <div>
-                        Pillows:{" "}
-                        {s.linenInventory?.pillows || s.pillowCount || 2}
-                      </div>
-                      <div>
-                        Blankets:{" "}
-                        {s.linenInventory?.blankets || s.blanketCount || 0}
-                      </div>
+                      <div>Bedsheets: {s.bedsheetCount} issued</div>
+                      <div>Pillows: {s.pillowCount} issued</div>
+                      <div>Blankets: {s.blanketCount} issued</div>
                     </div>
                   </div>
                   <div className='flex gap-2 mt-2'>
@@ -888,11 +1256,56 @@ export default function AdminStudents() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50'>
-          <div className='bg-white p-6 rounded-xl shadow-lg w-80'>
+          <div className='bg-white p-6 rounded-xl shadow-lg w-96'>
             <h2 className='text-lg font-semibold mb-4'>Confirm Delete</h2>
-            <p className='mb-6'>
+            <p className='mb-3'>
               Are you sure you want to delete this student?
             </p>
+            {deleteId && students.find((s) => s.id === deleteId) && (
+              <div className='mb-6 p-2 bg-blue-50 rounded text-sm'>
+                <p className='font-medium text-blue-800 mb-1'>
+                  Note about linen items:
+                </p>
+                {(() => {
+                  const student = students.find((s) => s.id === deleteId);
+                  const totalItems =
+                    (student?.bedsheetCount || 0) +
+                    (student?.pillowCount || 0) +
+                    (student?.blanketCount || 0);
+
+                  if (totalItems > 0) {
+                    return (
+                      <ul className='list-disc list-inside text-blue-700'>
+                        {(student?.bedsheetCount ?? 0) > 0 && (
+                          <li>
+                            {student?.bedsheetCount ?? 0} bedsheet(s) will be
+                            returned to inventory
+                          </li>
+                        )}
+                        {(student?.pillowCount ?? 0) > 0 && (
+                          <li>
+                            {student?.pillowCount ?? 0} pillow(s) will be returned to
+                            inventory
+                          </li>
+                        )}
+                        {(student?.blanketCount ?? 0) > 0 && (
+                          <li>
+                            {student?.blanketCount} blanket(s) will be returned
+                            to inventory
+                          </li>
+                        )}
+                      </ul>
+                    );
+                  } else {
+                    return (
+                      <p className='text-gray-600'>
+                        This student has no linen items to return.
+                      </p>
+                    );
+                  }
+                })()}
+              </div>
+            )}
             <div className='flex justify-end space-x-2'>
               <button
                 className='px-4 py-2 bg-gray-200 rounded hover:bg-gray-300'

@@ -34,9 +34,9 @@ linenRoute.get("/stats", async (c) => {
     },
     where: {
       OR: [
-        { bedsheetIssued: true },
-        { pillowIssued: true },
-        { blanketIssued: true },
+        { bedsheetCount: { gt: 0 } },
+        { pillowCount: { gt: 0 } },
+        { blanketCount: { gt: 0 } },
       ],
     },
   });
@@ -44,18 +44,18 @@ linenRoute.get("/stats", async (c) => {
   const recentIssues = await prisma.student.findMany({
     where: {
       OR: [
-        { bedsheetIssued: true },
-        { pillowIssued: true },
-        { blanketIssued: true },
+        { bedsheetCount: { gt: 0 } },
+        { pillowCount: { gt: 0 } },
+        { blanketCount: { gt: 0 } },
       ],
     },
     select: {
       id: true,
       name: true,
       email: true,
-      bedsheetIssued: true,
-      pillowIssued: true,
-      blanketIssued: true,
+      bedsheetCount: true,
+      pillowCount: true,
+      blanketCount: true,
       linenIssuedDate: true,
     },
     orderBy: {
@@ -114,9 +114,9 @@ linenRoute.post("/issue/:studentId", async (c) => {
     const student = await tx.student.update({
       where: { id: studentId },
       data: {
-        bedsheetIssued: true,
-        pillowIssued: true,
-        blanketIssued: blanket,
+        bedsheetCount: 1,
+        pillowCount: 2,
+        blanketCount: blanket ? 1 : 0,
         linenIssuedDate: new Date(),
       },
     });

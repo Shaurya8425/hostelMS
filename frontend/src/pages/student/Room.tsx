@@ -62,15 +62,25 @@ export default function StudentRoom() {
   const handleAssign = async (roomId: number) => {
     try {
       if (!studentEmail) throw new Error("Student email not found");
+      if (!roomId || isNaN(roomId)) throw new Error("Invalid room ID");
+
       await axios.put(
         `${API_BASE}/rooms/assign`,
-        { studentEmail, roomId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          studentEmail,
+          roomId: Number(roomId), // Ensure roomId is a number
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       toast.success("Room assigned successfully");
       fetchRooms(studentEmail); // Refresh room data
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to assign room");
+      const errorMessage =
+        err.response?.data?.error || err.message || "Failed to assign room";
+      toast.error(errorMessage);
+      console.error("Room assignment error:", err);
     }
   };
 

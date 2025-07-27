@@ -10,5 +10,7 @@ export const studentSchema = z.object({
   course: z.string().optional().nullable(),
   fromDate: z.coerce.date().optional().nullable(),
   toDate: z.coerce.date().optional().nullable(),
-  blanketRequired: z.boolean().default(false),
+  bedsheetCount: z.number().min(0).max(5).default(0),
+  pillowCount: z.number().min(0).max(5).default(0),
+  blanketCount: z.number().min(0).max(5).default(0),
 });
