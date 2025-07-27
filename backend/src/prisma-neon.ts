@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
 /**
  * Configure Prisma Client for use with Neon PostgreSQL
@@ -18,17 +18,17 @@ const prismaClientSingleton = () => {
     queryEngineConfig: {
       advisoryLockTimeout: 60000,
     },
-  })
-}
+  });
+};
 
 // Global type for TypeScript
 declare global {
-  var prisma: ReturnType<typeof prismaClientSingleton> | undefined
+  var prisma: ReturnType<typeof prismaClientSingleton> | undefined;
 }
 
 // Export a global singleton instance to avoid multiple client instances
-const prisma = global.prisma || prismaClientSingleton()
+const prisma = global.prisma || prismaClientSingleton();
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma
+if (process.env.NODE_ENV !== "production") global.prisma = prisma;
 
-export default prisma
+export default prisma;

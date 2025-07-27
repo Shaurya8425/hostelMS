@@ -10,7 +10,10 @@
     "seed": "ts-node prisma/seed.ts",
     "db:deploy": "bash ./scripts/deploy-db.sh",
     "db:neon": "node scripts/neon-migrate.js",
-    "postinstall": "node scripts/neon-migrate.js && npm run build"
+    "db:direct": "bash ./scripts/direct-migrate.sh",
+    "render": "node scripts/render-build.js",
+    "check-db": "node scripts/check-db.js",
+    "postinstall": "npx prisma generate"
   },
   "keywords": [],
   "author": "",
