@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "npm run build && node dist/index.js",
     "seed": "ts-node prisma/seed.ts",
-    "postinstall": "prisma generate && prisma migrate deploy"
+    "db:deploy": "bash ./scripts/deploy-db.sh",
+    "postinstall": "prisma generate && prisma migrate reset --force || prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
