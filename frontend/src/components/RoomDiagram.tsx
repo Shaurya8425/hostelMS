@@ -11,7 +11,12 @@ interface Room {
   floor: number;
   designation?: string | null;
   capacity: number;
-  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "BLOCKED";
+  status:
+    | "AVAILABLE"
+    | "OCCUPIED"
+    | "RESERVED"
+    | "BLOCKED"
+    | "PARTIALLY_OCCUPIED";
   students: {
     id: number;
     name: string;
@@ -19,9 +24,18 @@ interface Room {
   }[];
 }
 
+const getDisplayStatus = (room: Room) => {
+  if (room.status === "BLOCKED") return "BLOCKED";
+  if (room.status === "RESERVED") return "RESERVED";
+  if (room.students.length >= room.capacity) return "OCCUPIED";
+  if (room.students.length > 0) return "PARTIALLY_OCCUPIED";
+  return "AVAILABLE";
+};
+
 const statusColor: Record<Room["status"], string> = {
   AVAILABLE: "bg-blue-50 border-blue-500",
-  OCCUPIED: "bg-yellow-100 border-yellow-500",
+  OCCUPIED: "bg-red-100 border-red-500",
+  PARTIALLY_OCCUPIED: "bg-yellow-100 border-yellow-500",
   RESERVED: "bg-blue-100 border-blue-500",
   BLOCKED: "bg-gray-200 border-gray-400 text-gray-400",
 };
@@ -43,8 +57,8 @@ export default function RoomDiagram() {
     fetchRooms();
   }, []);
 
-  // Group rooms by block (wing)
-  const wings = Array.from(new Set(rooms.map((r) => r.block)));
+  // Group rooms by block (wing) and sort wings alphabetically
+  const wings = Array.from(new Set(rooms.map((r) => r.block))).sort();
 
   return (
     <div className='my-8'>
@@ -77,7 +91,7 @@ export default function RoomDiagram() {
                           key={room.id}
                           onClick={() => navigate(`/admin/rooms/${room.id}`)}
                           className={`border rounded p-2 text-center text-xs min-w-[90px] ${
-                            statusColor[room.status]
+                            statusColor[getDisplayStatus(room)]
                           } cursor-pointer hover:shadow-md transition-shadow`}
                           title={
                             room.designation
@@ -94,7 +108,13 @@ export default function RoomDiagram() {
                             </div>
                           )}
                           <div className='mb-1'>
-                            <span className='font-semibold'>{room.status}</span>
+                            <span className='font-semibold'>
+                              {room.students.length >= room.capacity
+                                ? "OCCUPIED"
+                                : room.students.length > 0
+                                ? "PARTIALLY OCCUPIED"
+                                : room.status}
+                            </span>
                           </div>
                           <div className='flex flex-wrap gap-1 justify-center'>
                             {[...Array(room.capacity)].map((_, index) => {

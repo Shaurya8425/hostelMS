@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE } from "../../api/apiBase";
+import { toast } from "react-toastify";
 import RoomDetailsSkeleton from "../../components/skeleton/RoomDetailsSkeleton";
 
 interface Room {
@@ -11,13 +12,26 @@ interface Room {
   floor: number;
   designation?: string | null;
   capacity: number;
-  status: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "BLOCKED";
+  status:
+    | "AVAILABLE"
+    | "OCCUPIED"
+    | "RESERVED"
+    | "BLOCKED"
+    | "PARTIALLY_OCCUPIED";
   students: {
     id: number;
     name: string;
     email: string;
   }[];
 }
+
+const getDisplayStatus = (room: Room) => {
+  if (room.status === "BLOCKED") return "BLOCKED";
+  if (room.status === "RESERVED") return "RESERVED";
+  if (room.students.length >= room.capacity) return "OCCUPIED";
+  if (room.students.length > 0) return "PARTIALLY_OCCUPIED";
+  return "AVAILABLE";
+};
 
 export default function RoomDetails() {
   const { id } = useParams();
@@ -26,6 +40,7 @@ export default function RoomDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedRoom, setEditedRoom] = useState<Partial<Room>>({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,17 +68,22 @@ export default function RoomDetails() {
   }, [id]);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       const res = await axios.put(`${API_BASE}/rooms/${id}`, editedRoom);
       setRoom(res.data);
       setIsEditing(false);
       setError(null);
+      toast.success("Room details updated successfully");
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError("Failed to update room");
-      }
+      const errorMessage =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : "Failed to update room";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -237,10 +257,13 @@ export default function RoomDetails() {
                     className='block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white'
                   >
                     <option value='AVAILABLE'>Available</option>
-                    <option value='OCCUPIED'>Occupied</option>
                     <option value='RESERVED'>Reserved</option>
                     <option value='BLOCKED'>Blocked</option>
                   </select>
+                  <p className='mt-2 text-sm text-gray-500'>
+                    Note: Occupancy status is automatically determined by the
+                    number of students assigned.
+                  </p>
                 </div>
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <label className='block text-sm font-medium text-gray-700 mb-2'>
@@ -284,22 +307,51 @@ export default function RoomDetails() {
                   </button>
                   <button
                     onClick={handleSave}
-                    className='px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center'
+                    disabled={saving}
+                    className='px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed'
                   >
-                    <svg
-                      className='w-4 h-4 mr-1.5'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth='2'
-                        d='M5 13l4 4L19 7'
-                      />
-                    </svg>
-                    Save Changes
+                    {saving ? (
+                      <>
+                        <svg
+                          className='animate-spin -ml-1 mr-2 h-4 w-4 text-white'
+                          xmlns='http://www.w3.org/2000/svg'
+                          fill='none'
+                          viewBox='0 0 24 24'
+                        >
+                          <circle
+                            className='opacity-25'
+                            cx='12'
+                            cy='12'
+                            r='10'
+                            stroke='currentColor'
+                            strokeWidth='4'
+                          ></circle>
+                          <path
+                            className='opacity-75'
+                            fill='currentColor'
+                            d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                          ></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className='w-4 h-4 mr-1.5'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth='2'
+                            d='M5 13l4 4L19 7'
+                          />
+                        </svg>
+                        Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -347,16 +399,23 @@ export default function RoomDetails() {
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
                     ${
-                      room.status === "AVAILABLE"
+                      getDisplayStatus(room) === "AVAILABLE"
                         ? "bg-green-100 text-green-800"
-                        : room.status === "OCCUPIED"
+                        : getDisplayStatus(room) === "OCCUPIED"
+                        ? "bg-red-100 text-red-800"
+                        : getDisplayStatus(room) === "PARTIALLY_OCCUPIED"
                         ? "bg-yellow-100 text-yellow-800"
-                        : room.status === "RESERVED"
+                        : getDisplayStatus(room) === "RESERVED"
                         ? "bg-blue-100 text-blue-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {room.status.charAt(0) + room.status.slice(1).toLowerCase()}
+                    {getDisplayStatus(room)
+                      .split("_")
+                      .map(
+                        (word) => word.charAt(0) + word.slice(1).toLowerCase()
+                      )
+                      .join(" ")}
                   </span>
                 </div>
                 <div className='bg-gray-50 rounded-lg p-4'>

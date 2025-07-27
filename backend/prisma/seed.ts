@@ -5,7 +5,17 @@ async function main() {
   // Add linen inventory for testing
   await prisma.linenInventory.deleteMany();
   await prisma.linenInventory.create({
-    data: { bedsheet: 10, pillowCover: 8 },
+    data: {
+      bedsheet: 100,
+      bedsheetActive: 20,
+      bedsheetInHand: 80,
+      pillowCover: 150,
+      pillowActive: 30,
+      pillowInHand: 120,
+      blanket: 75,
+      blanketActive: 15,
+      blanketInHand: 60,
+    },
   });
   // Delete all data first to avoid unique constraint errors
   // removed feePayment deleteMany

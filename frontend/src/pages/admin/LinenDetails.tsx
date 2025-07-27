@@ -23,9 +23,9 @@ interface LinenStats {
     id: number;
     name: string;
     email: string;
-    bedsheetIssued: boolean;
-    pillowIssued: boolean;
-    blanketIssued: boolean;
+    bedsheetCount: number;
+    pillowCount: number;
+    blanketCount: number;
     linenIssuedDate: string;
   }>;
 }
@@ -294,19 +294,19 @@ export default function LinenDetails() {
                   </td>
                   <td className='px-6 py-4'>
                     <div className='flex gap-2'>
-                      {issue.bedsheetIssued && (
+                      {issue.bedsheetCount > 0 && (
                         <span className='px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium border border-blue-200'>
-                          Bedsheet
+                          Bedsheet ({issue.bedsheetCount})
                         </span>
                       )}
-                      {issue.pillowIssued && (
+                      {issue.pillowCount > 0 && (
                         <span className='px-3 py-1 text-xs rounded-full bg-green-100 text-green-800 font-medium border border-green-200'>
-                          Pillow Cover
+                          Pillow Cover ({issue.pillowCount})
                         </span>
                       )}
-                      {issue.blanketIssued && (
+                      {issue.blanketCount > 0 && (
                         <span className='px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-800 font-medium border border-purple-200'>
-                          Blanket
+                          Blanket ({issue.blanketCount})
                         </span>
                       )}
                     </div>
