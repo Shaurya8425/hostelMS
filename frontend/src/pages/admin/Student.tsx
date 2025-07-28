@@ -137,12 +137,18 @@ export default function AdminStudents() {
       }
 
       const res = await axiosInstance.get(
-        `/students?search=${search}&page=${page}`
+        `/students?search=${search}&page=${page}&limit=20`
       );
 
+      console.log("Full API response:", res);
       console.log("Student data from API:", res.data);
+      console.log("Meta data:", res.data.meta);
+      console.log("Total pages from API:", res.data.meta?.totalPages);
+      console.log("Current page:", page);
+      console.log("Search query:", search);
+
       setStudents(res.data.data || []);
-      setTotalPages(res.data.totalPages || 1);
+      setTotalPages(res.data.meta?.totalPages || 1);
     } catch (err: any) {
       console.error("Error fetching students:", {
         message: err.message,
@@ -373,6 +379,8 @@ export default function AdminStudents() {
       if (response.data) {
         toast.success("Student added successfully");
         setShowAddForm(false);
+        setPage(1); // Reset to first page to show the newly added student
+        setSearch(""); // Clear search to ensure new student is visible
         await fetchStudents();
         setForm(defaultForm);
       }
