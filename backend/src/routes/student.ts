@@ -68,6 +68,10 @@ studentRoute.post(
       email,
       phone,
       gender,
+      designation,
+      guardianName,
+      mobile,
+      ticketNumber,
       division,
       course,
       fromDate,
@@ -85,12 +89,15 @@ studentRoute.post(
           bedsheet: 0,
           bedsheetActive: 0,
           bedsheetInHand: 0,
+          bedsheetUsed: 0,
           pillowCover: 0,
           pillowActive: 0,
           pillowInHand: 0,
+          pillowUsed: 0,
           blanket: 0,
           blanketActive: 0,
           blanketInHand: 0,
+          blanketUsed: 0,
         },
       });
     }
@@ -161,6 +168,10 @@ studentRoute.post(
           email,
           phone,
           gender,
+          designation,
+          guardianName,
+          mobile,
+          ticketNumber,
           division,
           course,
           fromDate,
@@ -248,12 +259,15 @@ studentRoute.post(
             bedsheet: 0,
             bedsheetActive: 0,
             bedsheetInHand: 0,
+            bedsheetUsed: 0,
             pillowCover: 0,
             pillowActive: 0,
             pillowInHand: 0,
+            pillowUsed: 0,
             blanket: 0,
             blanketActive: 0,
             blanketInHand: 0,
+            blanketUsed: 0,
           },
         });
       }
@@ -359,6 +373,10 @@ studentRoute.get("/", async (c) => {
         email: true,
         phone: true,
         gender: true,
+        designation: true,
+        guardianName: true,
+        mobile: true,
+        ticketNumber: true,
         division: true,
         course: true,
         fromDate: true,
@@ -526,6 +544,10 @@ studentRoute.put("/:id", async (c) => {
       email: body.email,
       phone: body.phone,
       gender: body.gender,
+      designation: body.designation,
+      guardianName: body.guardianName,
+      mobile: body.mobile,
+      ticketNumber: body.ticketNumber,
       division: body.division,
       course: body.course,
       fromDate: body.fromDate,
@@ -563,17 +585,125 @@ studentRoute.put("/:id", async (c) => {
   }
 });
 
-// ✅ Delete student
+// ✅ Archive student instead of permanently deleting
 studentRoute.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   try {
-    await prisma.student.delete({ where: { id } });
-    return c.json({ message: "Student deleted" });
+    // Get the current user (admin) for audit trail
+    const currentUser = c.get("user");
+
+    // Get student's complete information before archiving
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        room: true,
+        user: true,
+      },
+    });
+
+    if (!student) {
+      return c.json({ error: "Student not found" }, 404);
+    }
+
+    // Archive student and update linen inventory in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Create archived student record
+      await tx.archivedStudent.create({
+        data: {
+          originalId: student.id,
+          name: student.name,
+          email: student.email,
+          phone: student.phone,
+          gender: student.gender,
+          designation: student.designation,
+          guardianName: student.guardianName,
+          mobile: student.mobile,
+          ticketNumber: student.ticketNumber,
+          division: student.division,
+          course: student.course,
+          fromDate: student.fromDate,
+          toDate: student.toDate,
+          bedsheetCount: student.bedsheetCount,
+          pillowCount: student.pillowCount,
+          blanketCount: student.blanketCount,
+          linenIssuedDate: student.linenIssuedDate,
+          roomNumber: student.room?.roomNumber || null,
+          deletedBy: currentUser?.email || null,
+          originalCreatedAt: student.createdAt,
+          originalUpdatedAt: student.updatedAt,
+        },
+      });
+
+      // Delete the student (this will cascade delete complaints and leaves)
+      await tx.student.delete({ where: { id } });
+
+      // Delete associated user account if exists
+      if (student.user) {
+        await tx.user.delete({ where: { id: student.user.id } });
+      }
+
+      // If student had any linen, update the inventory
+      if (
+        student.bedsheetCount > 0 ||
+        student.pillowCount > 0 ||
+        student.blanketCount > 0
+      ) {
+        // Get current inventory
+        let inventory = await tx.linenInventory.findFirst();
+
+        if (!inventory) {
+          // Create inventory record if it doesn't exist
+          inventory = await tx.linenInventory.create({
+            data: {
+              bedsheet: 0,
+              bedsheetActive: 0,
+              bedsheetInHand: 0,
+              bedsheetUsed: 0,
+              pillowCover: 0,
+              pillowActive: 0,
+              pillowInHand: 0,
+              pillowUsed: 0,
+              blanket: 0,
+              blanketActive: 0,
+              blanketInHand: 0,
+              blanketUsed: 0,
+            },
+          });
+        }
+
+        // Move the student's linen from "active" to "used"
+        await tx.linenInventory.update({
+          where: { id: inventory.id },
+          data: {
+            // Move bedsheets from active to used
+            bedsheetActive: { decrement: student.bedsheetCount },
+            bedsheetUsed: { increment: student.bedsheetCount },
+
+            // Move pillows from active to used
+            pillowActive: { decrement: student.pillowCount },
+            pillowUsed: { increment: student.pillowCount },
+
+            // Move blankets from active to used
+            blanketActive: { decrement: student.blanketCount },
+            blanketUsed: { increment: student.blanketCount },
+          },
+        });
+      }
+    });
+
+    return c.json({
+      message: "Student archived successfully",
+      linenMovedToUsed: {
+        bedsheets: student.bedsheetCount,
+        pillows: student.pillowCount,
+        blankets: student.blanketCount,
+      },
+    });
   } catch (error) {
-    console.error("Delete student error:", error);
+    console.error("Archive student error:", error);
     return c.json(
       {
-        error: "Failed to delete student",
+        error: "Failed to archive student",
         details: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
       },

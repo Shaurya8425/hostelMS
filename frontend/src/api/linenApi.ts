@@ -9,12 +9,15 @@ export const getLinenInventory = async () => {
       bedsheet: 0,
       bedsheetActive: 0,
       bedsheetInHand: 0,
+      bedsheetUsed: 0,
       pillowCover: 0,
       pillowActive: 0,
       pillowInHand: 0,
+      pillowUsed: 0,
       blanket: 0,
       blanketActive: 0,
       blanketInHand: 0,
+      blanketUsed: 0,
     };
 
     // Return the response data, but fall back to default values if properties are missing
@@ -22,6 +25,36 @@ export const getLinenInventory = async () => {
   } catch (error: any) {
     console.error(
       "Error fetching linen inventory:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+export const getLinenStats = async () => {
+  try {
+    const res = await axiosInstance.get("/linen/stats");
+    console.log("Linen stats API response:", res.data);
+    // Extract inventory data from the stats response
+    return (
+      res.data.inventory || {
+        bedsheet: 0,
+        bedsheetActive: 0,
+        bedsheetInHand: 0,
+        bedsheetUsed: 0,
+        pillowCover: 0,
+        pillowActive: 0,
+        pillowInHand: 0,
+        pillowUsed: 0,
+        blanket: 0,
+        blanketActive: 0,
+        blanketInHand: 0,
+        blanketUsed: 0,
+      }
+    );
+  } catch (error: any) {
+    console.error(
+      "Error fetching linen stats:",
       error.response?.data || error.message
     );
     throw error;

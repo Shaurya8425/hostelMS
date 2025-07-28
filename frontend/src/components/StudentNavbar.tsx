@@ -18,7 +18,10 @@ export default function StudentNavbar() {
     navigate("/");
   };
   // Hide navbar on login and root routes
-  if (!isAuthenticated || ["/login","/signup", "/"].includes(location.pathname))
+  if (
+    !isAuthenticated ||
+    ["/login", "/signup", "/"].includes(location.pathname)
+  )
     return null;
   return (
     <nav className='bg-gradient-to-r from-green-700 to-green-900 text-white px-4 py-3 flex flex-wrap md:flex-nowrap justify-between items-center shadow-lg rounded-b-2xl'>
@@ -39,13 +42,6 @@ export default function StudentNavbar() {
           onClick={closeMenu}
         >
           Dashboard
-        </Link>
-        <Link
-          to='/student/room'
-          className='hover:text-yellow-200 transition'
-          onClick={closeMenu}
-        >
-          Room
         </Link>
         <Link
           to='/student/complaints'

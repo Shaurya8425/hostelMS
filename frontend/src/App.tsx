@@ -7,10 +7,8 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import CompleteProfile from "./pages/student/CompleteProfile";
 import Complaint from "./pages/student/Complaint";
 import Leave from "./pages/student/Leave";
-import StudentRoom from "./pages/student/Room";
 import AdminStudents from "./pages/admin/Student";
 import AdminComplaints from "./pages/admin/Complaints";
 import AdminRooms from "./pages/admin/Rooms";
@@ -22,6 +20,7 @@ import { getUserRole } from "./utils/getUserRole";
 import { AuthProvider } from "./context/AuthContext";
 import HomePage from "./pages/Home";
 import LinenDetails from "./pages/admin/LinenDetails";
+import BedOccupancyPage from "./pages/admin/BedOccupancy";
 
 function App() {
   const role = getUserRole();
@@ -86,11 +85,18 @@ function App() {
             path='/admin/linen'
             element={
               <ProtectedRoute role='ADMIN'>
-                  <LinenDetails />
+                <LinenDetails />
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path='/admin/bed-occupancy'
+            element={
+              <ProtectedRoute role='ADMIN'>
+                <BedOccupancyPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Student Pages */}
           <Route
@@ -98,14 +104,6 @@ function App() {
             element={
               <ProtectedRoute role='STUDENT'>
                 <StudentDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/complete-profile'
-            element={
-              <ProtectedRoute role='STUDENT'>
-                <CompleteProfile />
               </ProtectedRoute>
             }
           />
@@ -122,14 +120,6 @@ function App() {
             element={
               <ProtectedRoute role='STUDENT'>
                 <Leave />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='student/room'
-            element={
-              <ProtectedRoute role='STUDENT'>
-                <StudentRoom />
               </ProtectedRoute>
             }
           />

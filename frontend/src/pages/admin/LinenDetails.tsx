@@ -7,12 +7,15 @@ interface LinenStats {
     bedsheet: number;
     bedsheetActive: number;
     bedsheetInHand: number;
+    bedsheetUsed: number;
     pillowCover: number;
     pillowActive: number;
     pillowInHand: number;
+    pillowUsed: number;
     blanket: number;
     blanketActive: number;
     blanketInHand: number;
+    blanketUsed: number;
   };
   issuedStats: {
     _count: {
@@ -62,7 +65,7 @@ export default function LinenDetails() {
               <div key={i} className='bg-white rounded-lg shadow p-6'>
                 <div className='h-6 bg-gray-200 rounded w-1/3 mb-4'></div>
                 <div className='space-y-4'>
-                  {[...Array(3)].map((_, j) => (
+                  {[...Array(4)].map((_, j) => (
                     <div key={j} className='flex justify-between items-center'>
                       <div className='h-4 bg-gray-200 rounded w-1/3'></div>
                       <div className='h-4 bg-gray-200 rounded w-16'></div>
@@ -141,22 +144,54 @@ export default function LinenDetails() {
             <h2 className='text-lg font-semibold text-blue-900'>Bedsheets</h2>
           </div>
           <div className='space-y-3'>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
-              <span className='text-gray-600'>Total Inventory:</span>
-              <span className='font-medium text-blue-700'>
+            <div className='flex justify-between items-center bg-blue-50 p-2 rounded border-l-4 border-blue-500'>
+              <span className='text-gray-700 font-medium'>
+                Total Inventory:
+              </span>
+              <span className='font-bold text-blue-800 text-lg'>
                 {stats.inventory.bedsheet}
               </span>
             </div>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
-              <span className='text-gray-600'>In Use:</span>
+            <div className='flex justify-between items-center bg-orange-50 p-2 rounded'>
+              <span className='text-gray-600'>Currently In Use:</span>
               <span className='font-medium text-orange-600'>
-                {stats.inventory.bedsheetActive}
+                {stats.inventory.bedsheetActive} (
+                {stats.inventory.bedsheet > 0
+                  ? (
+                      (stats.inventory.bedsheetActive /
+                        stats.inventory.bedsheet) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
               </span>
             </div>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
+            <div className='flex justify-between items-center bg-green-50 p-2 rounded'>
               <span className='text-gray-600'>Available:</span>
               <span className='font-medium text-green-600'>
-                {stats.inventory.bedsheetInHand}
+                {stats.inventory.bedsheetInHand} (
+                {stats.inventory.bedsheet > 0
+                  ? (
+                      (stats.inventory.bedsheetInHand /
+                        stats.inventory.bedsheet) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
+              </span>
+            </div>
+            <div className='flex justify-between items-center bg-red-50 p-2 rounded'>
+              <span className='text-gray-600'>Used/Returned:</span>
+              <span className='font-medium text-red-600'>
+                {stats.inventory.bedsheetUsed} (
+                {stats.inventory.bedsheet > 0
+                  ? (
+                      (stats.inventory.bedsheetUsed /
+                        stats.inventory.bedsheet) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
               </span>
             </div>
           </div>
@@ -183,22 +218,54 @@ export default function LinenDetails() {
             </h2>
           </div>
           <div className='space-y-3'>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
-              <span className='text-gray-600'>Total Inventory:</span>
-              <span className='font-medium text-blue-700'>
+            <div className='flex justify-between items-center bg-blue-50 p-2 rounded border-l-4 border-blue-500'>
+              <span className='text-gray-700 font-medium'>
+                Total Inventory:
+              </span>
+              <span className='font-bold text-blue-800 text-lg'>
                 {stats.inventory.pillowCover}
               </span>
             </div>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
-              <span className='text-gray-600'>In Use:</span>
+            <div className='flex justify-between items-center bg-orange-50 p-2 rounded'>
+              <span className='text-gray-600'>Currently In Use:</span>
               <span className='font-medium text-orange-600'>
-                {stats.inventory.pillowActive}
+                {stats.inventory.pillowActive} (
+                {stats.inventory.pillowCover > 0
+                  ? (
+                      (stats.inventory.pillowActive /
+                        stats.inventory.pillowCover) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
               </span>
             </div>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
+            <div className='flex justify-between items-center bg-green-50 p-2 rounded'>
               <span className='text-gray-600'>Available:</span>
               <span className='font-medium text-green-600'>
-                {stats.inventory.pillowInHand}
+                {stats.inventory.pillowInHand} (
+                {stats.inventory.pillowCover > 0
+                  ? (
+                      (stats.inventory.pillowInHand /
+                        stats.inventory.pillowCover) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
+              </span>
+            </div>
+            <div className='flex justify-between items-center bg-red-50 p-2 rounded'>
+              <span className='text-gray-600'>Used/Returned:</span>
+              <span className='font-medium text-red-600'>
+                {stats.inventory.pillowUsed} (
+                {stats.inventory.pillowCover > 0
+                  ? (
+                      (stats.inventory.pillowUsed /
+                        stats.inventory.pillowCover) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
               </span>
             </div>
           </div>
@@ -223,22 +290,53 @@ export default function LinenDetails() {
             <h2 className='text-lg font-semibold text-blue-900'>Blankets</h2>
           </div>
           <div className='space-y-3'>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
-              <span className='text-gray-600'>Total Inventory:</span>
-              <span className='font-medium text-blue-700'>
+            <div className='flex justify-between items-center bg-blue-50 p-2 rounded border-l-4 border-blue-500'>
+              <span className='text-gray-700 font-medium'>
+                Total Inventory:
+              </span>
+              <span className='font-bold text-blue-800 text-lg'>
                 {stats.inventory.blanket}
               </span>
             </div>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
-              <span className='text-gray-600'>In Use:</span>
+            <div className='flex justify-between items-center bg-orange-50 p-2 rounded'>
+              <span className='text-gray-600'>Currently In Use:</span>
               <span className='font-medium text-orange-600'>
-                {stats.inventory.blanketActive}
+                {stats.inventory.blanketActive} (
+                {stats.inventory.blanket > 0
+                  ? (
+                      (stats.inventory.blanketActive /
+                        stats.inventory.blanket) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
               </span>
             </div>
-            <div className='flex justify-between items-center bg-gray-50 p-2 rounded'>
+            <div className='flex justify-between items-center bg-green-50 p-2 rounded'>
               <span className='text-gray-600'>Available:</span>
               <span className='font-medium text-green-600'>
-                {stats.inventory.blanketInHand}
+                {stats.inventory.blanketInHand} (
+                {stats.inventory.blanket > 0
+                  ? (
+                      (stats.inventory.blanketInHand /
+                        stats.inventory.blanket) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
+              </span>
+            </div>
+            <div className='flex justify-between items-center bg-red-50 p-2 rounded'>
+              <span className='text-gray-600'>Used/Returned:</span>
+              <span className='font-medium text-red-600'>
+                {stats.inventory.blanketUsed} (
+                {stats.inventory.blanket > 0
+                  ? (
+                      (stats.inventory.blanketUsed / stats.inventory.blanket) *
+                      100
+                    ).toFixed(1)
+                  : "0.0"}
+                %)
               </span>
             </div>
           </div>

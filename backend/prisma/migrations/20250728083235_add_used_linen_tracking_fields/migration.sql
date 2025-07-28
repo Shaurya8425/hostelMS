@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "LinenInventory" ADD COLUMN     "bedsheetUsed" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "blanketUsed" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "pillowUsed" INTEGER NOT NULL DEFAULT 0;

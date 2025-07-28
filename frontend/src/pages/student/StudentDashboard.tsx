@@ -21,7 +21,9 @@ export default function StudentDashboard() {
         const { user } = res.data;
         console.log("Fetched user from /auth/me:", user);
         if (user.role === "STUDENT" && user.studentId === null) {
-          window.location.href = "/complete-profile";
+          setError(
+            "Student profile not found. Please contact the administrator to complete your profile."
+          );
           return;
         }
         // Get student profile (with room, complaints, leaves, payments)
@@ -60,19 +62,23 @@ export default function StudentDashboard() {
   const {
     name,
     email,
-    // branch removed
-    // year removed
-    // rollNumber removed
+    phone,
     gender,
+    designation,
+    guardianName,
+    mobile,
+    ticketNumber,
     division,
     course,
     fromDate,
     toDate,
-    linenIssued,
+    bedsheetCount,
+    pillowCount,
+    blanketCount,
+    linenIssuedDate,
     room,
     complaints,
     leaves,
-    // payments removed
   } = profile;
 
   return (
@@ -84,84 +90,241 @@ export default function StudentDashboard() {
         Student Dashboard
       </h1>
       <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
-        <h2 className='font-bold text-lg mb-3 text-green-800'>Profile</h2>
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2'>
-          <div>
-            <span className='font-semibold'>Name:</span> {name}
-          </div>
-          <div>
-            <span className='font-semibold'>Email:</span> {email}
-          </div>
-          {/* Removed branch, year, roll number */}
-          <div>
-            <span className='font-semibold'>Gender:</span> {gender}
-          </div>
-          <div>
-            <span className='font-semibold'>Division:</span> {division}
-          </div>
-          <div>
-            <span className='font-semibold'>Course:</span> {course}
-          </div>
-          <div>
-            <span className='font-semibold'>From:</span>{" "}
-            {fromDate ? new Date(fromDate).toLocaleDateString() : ""}
-          </div>
-          <div>
-            <span className='font-semibold'>To:</span>{" "}
-            {toDate ? new Date(toDate).toLocaleDateString() : ""}
-          </div>
-          <div>
-            <span className='font-semibold'>Linen Issued:</span>{" "}
-            {linenIssued === "BEDSHEET"
-              ? "Bedsheet"
-              : linenIssued === "PILLOW_COVER"
-              ? "Pillow Cover"
-              : linenIssued}
-          </div>
-        </div>
-      </div>
-      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
-        <h2 className='font-bold text-lg mb-3 text-green-800'>
-          Room Assignment
+        <h2 className='font-bold text-lg mb-4 text-green-800 flex items-center gap-2'>
+          <span>👤</span> Personal Information
         </h2>
-        {room ? (
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          {/* Basic Information */}
+          <div className='space-y-3'>
+            <h3 className='font-semibold text-gray-700 text-sm uppercase tracking-wide border-b pb-1'>
+              Basic Details
+            </h3>
             <div>
-              <span className='font-semibold'>Block:</span> {room.block}
+              <span className='font-semibold text-gray-600'>Name:</span>{" "}
+              <span className='text-gray-800'>{name}</span>
             </div>
             <div>
-              <span className='font-semibold'>Floor:</span> {room.floor}
+              <span className='font-semibold text-gray-600'>Email:</span>{" "}
+              <span className='text-gray-800'>{email}</span>
             </div>
             <div>
-              <span className='font-semibold'>Designation:</span>{" "}
-              {room.designation}
+              <span className='font-semibold text-gray-600'>Phone:</span>{" "}
+              <span className='text-gray-800'>{phone || "Not provided"}</span>
             </div>
             <div>
-              <span className='font-semibold'>Status:</span>{" "}
+              <span className='font-semibold text-gray-600'>Mobile:</span>{" "}
+              <span className='text-gray-800'>{mobile || "Not provided"}</span>
+            </div>
+            <div>
+              <span className='font-semibold text-gray-600'>Gender:</span>{" "}
+              <span className='text-gray-800'>{gender}</span>
+            </div>
+            <div>
+              <span className='font-semibold text-gray-600'>
+                Guardian Name:
+              </span>{" "}
+              <span className='text-gray-800'>
+                {guardianName || "Not provided"}
+              </span>
+            </div>
+          </div>
+
+          {/* Academic & Administrative Information */}
+          <div className='space-y-3'>
+            <h3 className='font-semibold text-gray-700 text-sm uppercase tracking-wide border-b pb-1'>
+              Academic & Administrative
+            </h3>
+            <div>
+              <span className='font-semibold text-gray-600'>Designation:</span>{" "}
               <span
-                className={
-                  room.status === "AVAILABLE"
-                    ? "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
-                    : room.status === "OCCUPIED"
-                    ? "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold"
-                    : room.status === "RESERVED"
-                    ? "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
-                    : "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"
-                }
+                className={`${
+                  designation ? "text-gray-800" : "text-gray-400 italic"
+                }`}
               >
-                {room.status}
+                {designation || "Not assigned"}
               </span>
             </div>
             <div>
-              <span className='font-semibold'>Room No:</span> {room.roomNumber}
+              <span className='font-semibold text-gray-600'>
+                Ticket Number:
+              </span>{" "}
+              <span
+                className={`${
+                  ticketNumber
+                    ? "text-blue-600 font-mono"
+                    : "text-gray-400 italic"
+                }`}
+              >
+                {ticketNumber || "Not assigned"}
+              </span>
+            </div>
+            <div>
+              <span className='font-semibold text-gray-600'>Division:</span>{" "}
+              <span
+                className={`${
+                  division ? "text-gray-800" : "text-gray-400 italic"
+                }`}
+              >
+                {division || "Not assigned"}
+              </span>
+            </div>
+            <div>
+              <span className='font-semibold text-gray-600'>Course:</span>{" "}
+              <span
+                className={`${
+                  course ? "text-gray-800" : "text-gray-400 italic"
+                }`}
+              >
+                {course || "Not assigned"}
+              </span>
+            </div>
+            <div>
+              <span className='font-semibold text-gray-600'>From Date:</span>{" "}
+              <span
+                className={`${
+                  fromDate ? "text-gray-800" : "text-gray-400 italic"
+                }`}
+              >
+                {fromDate ? new Date(fromDate).toLocaleDateString() : "Not set"}
+              </span>
+            </div>
+            <div>
+              <span className='font-semibold text-gray-600'>To Date:</span>{" "}
+              <span
+                className={`${
+                  toDate ? "text-gray-800" : "text-gray-400 italic"
+                }`}
+              >
+                {toDate ? new Date(toDate).toLocaleDateString() : "Not set"}
+              </span>
             </div>
           </div>
-        ) : (
-          <div className='text-gray-500 italic'>No room assigned</div>
+        </div>
+      </div>
+
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-4 text-green-800 flex items-center gap-2'>
+          <span>🛏️</span> Linen Inventory
+        </h2>
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-4'>
+          <div className='text-center p-3 bg-blue-50 rounded-lg'>
+            <div className='text-2xl font-bold text-blue-600'>
+              {bedsheetCount || 0}
+            </div>
+            <div className='text-sm text-gray-600'>Bedsheets</div>
+          </div>
+          <div className='text-center p-3 bg-green-50 rounded-lg'>
+            <div className='text-2xl font-bold text-green-600'>
+              {pillowCount || 0}
+            </div>
+            <div className='text-sm text-gray-600'>Pillows</div>
+          </div>
+          <div className='text-center p-3 bg-purple-50 rounded-lg'>
+            <div className='text-2xl font-bold text-purple-600'>
+              {blanketCount || 0}
+            </div>
+            <div className='text-sm text-gray-600'>Blankets</div>
+          </div>
+        </div>
+        {linenIssuedDate && (
+          <div className='mt-4 p-3 bg-yellow-50 rounded-lg'>
+            <span className='font-semibold text-yellow-800'>
+              Last Linen Issue Date:
+            </span>{" "}
+            <span className='text-yellow-700'>
+              {new Date(linenIssuedDate).toLocaleDateString()}
+            </span>
+          </div>
+        )}
+
+        {/* Enhanced linen info if available */}
+        {profile.linenInfo && (
+          <div className='mt-4 p-3 bg-gray-50 rounded-lg'>
+            <h4 className='font-semibold text-gray-700 mb-2'>Linen Details</h4>
+            <div className='text-sm text-gray-600'>
+              <p>
+                Issued Date:{" "}
+                {profile.linenInfo.issuedDate
+                  ? new Date(profile.linenInfo.issuedDate).toLocaleDateString()
+                  : "Not recorded"}
+              </p>
+            </div>
+          </div>
         )}
       </div>
       <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
-        <h2 className='font-bold text-lg mb-3 text-green-800'>Complaints</h2>
+        <h2 className='font-bold text-lg mb-4 text-green-800 flex items-center gap-2'>
+          <span>🏠</span> Room Assignment
+        </h2>
+        {room ? (
+          <div className='bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3'>
+              <div>
+                <span className='font-semibold text-gray-700'>
+                  Room Number:
+                </span>{" "}
+                <span className='text-blue-600 font-bold text-lg'>
+                  {room.roomNumber}
+                </span>
+              </div>
+              <div>
+                <span className='font-semibold text-gray-700'>Block:</span>{" "}
+                <span className='text-indigo-600 font-medium'>
+                  {room.block}
+                </span>
+              </div>
+              <div>
+                <span className='font-semibold text-gray-700'>Floor:</span>{" "}
+                <span className='text-gray-800'>
+                  {room.floor === 0 ? "Ground Floor" : `Floor ${room.floor}`}
+                </span>
+              </div>
+              <div>
+                <span className='font-semibold text-gray-700'>Capacity:</span>{" "}
+                <span className='text-gray-800'>
+                  {room.capacity || "Not specified"}
+                </span>
+              </div>
+              {room.designation && (
+                <div>
+                  <span className='font-semibold text-gray-700'>
+                    Designation:
+                  </span>{" "}
+                  <span className='text-gray-800'>{room.designation}</span>
+                </div>
+              )}
+              <div>
+                <span className='font-semibold text-gray-700'>Status:</span>{" "}
+                <span
+                  className={
+                    room.status === "AVAILABLE"
+                      ? "bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold"
+                      : room.status === "OCCUPIED"
+                      ? "bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"
+                      : room.status === "RESERVED"
+                      ? "bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold"
+                      : "bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold"
+                  }
+                >
+                  {room.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className='text-center py-8 text-gray-500 italic bg-gray-50 rounded-lg'>
+            <div className='text-4xl mb-2'>🏠</div>
+            <div>No room assigned yet</div>
+            <div className='text-sm mt-1'>
+              Please contact the administrator for room assignment
+            </div>
+          </div>
+        )}
+      </div>
+      <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
+        <h2 className='font-bold text-lg mb-4 text-green-800 flex items-center gap-2'>
+          <span>📝</span> Complaints
+        </h2>
         {complaints && complaints.length > 0 ? (
           <ul className='list-disc ml-6 space-y-1'>
             {complaints.map((c: any) => (
@@ -193,7 +356,9 @@ export default function StudentDashboard() {
         </Link>
       </div>
       <div className='bg-white rounded-xl shadow p-6 mb-4 border'>
-        <h2 className='font-bold text-lg mb-3 text-green-800'>Leaves</h2>
+        <h2 className='font-bold text-lg mb-4 text-green-800 flex items-center gap-2'>
+          <span>🏖️</span> Leaves
+        </h2>
         {leaves && leaves.length > 0 ? (
           <ul className='list-disc ml-6 space-y-1'>
             {leaves.map((l: any) => (

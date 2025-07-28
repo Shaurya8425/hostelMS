@@ -2,19 +2,22 @@ import prisma from "../src/db";
 import { hash } from "bcryptjs";
 
 async function main() {
-  // Add linen inventory for testing
+  // Add linen inventory for testing with realistic numbers for medium-sized sample
   await prisma.linenInventory.deleteMany();
   await prisma.linenInventory.create({
     data: {
-      bedsheet: 100,
-      bedsheetActive: 20,
-      bedsheetInHand: 80,
-      pillowCover: 150,
-      pillowActive: 30,
-      pillowInHand: 120,
-      blanket: 75,
-      blanketActive: 15,
-      blanketInHand: 60,
+      bedsheet: 200, // Total bedsheets available
+      bedsheetActive: 35, // In use by students (15 students + some extras)
+      bedsheetInHand: 165, // Available in store
+      bedsheetUsed: 25, // Used/dirty bedsheets
+      pillowCover: 250, // Total pillow covers
+      pillowActive: 20, // In use
+      pillowInHand: 200, // Available
+      pillowUsed: 30, // Used/dirty
+      blanket: 150, // Total blankets
+      blanketActive: 18, // In use
+      blanketInHand: 120, // Available
+      blanketUsed: 12, // Used/dirty
     },
   });
   // Delete all data first to avoid unique constraint errors
@@ -43,9 +46,9 @@ async function main() {
     }),
   ]);
 
-  // Create 5 student users
+  // Create 15 student users for medium-sized sample data
   const studentUsers = await Promise.all(
-    Array.from({ length: 5 }).map(async (_, i) =>
+    Array.from({ length: 15 }).map(async (_, i) =>
       prisma.user.create({
         data: {
           email: `student${i + 1}@hostel.com`,
@@ -56,19 +59,86 @@ async function main() {
     )
   );
 
-  // Create 5 students
+  // Sample data arrays for variety
+  const designations = [
+    "Student",
+    "Research Scholar",
+    "Project Trainee",
+    "Intern",
+    "Exchange Student",
+  ];
+  const guardianNames = [
+    "Rajesh Kumar",
+    "Priya Sharma",
+    "Amit Patel",
+    "Sunita Singh",
+    "Vikram Gupta",
+    "Meera Joshi",
+    "Arjun Reddy",
+    "Kavya Iyer",
+    "Rohit Agarwal",
+    "Sneha Das",
+    "Manoj Verma",
+    "Pooja Nair",
+    "Suresh Yadav",
+    "Anita Bhatt",
+    "Ravi Chandra",
+  ];
+  const divisions = ["A", "B", "C", "D"];
+  const courses = [
+    "BTech CSE",
+    "BTech ECE",
+    "BTech ME",
+    "MTech CSE",
+    "MTech ECE",
+    "MBA",
+    "MCA",
+    "PhD CSE",
+    "PhD ECE",
+  ];
+  const mobileNumbers = [
+    "9876543210",
+    "9876543211",
+    "9876543212",
+    "9876543213",
+    "9876543214",
+    "9876543215",
+    "9876543216",
+    "9876543217",
+    "9876543218",
+    "9876543219",
+    "9876543220",
+    "9876543221",
+    "9876543222",
+    "9876543223",
+    "9876543224",
+  ];
+
+  // Create 15 students with comprehensive sample data
   const students = await Promise.all(
     studentUsers.map((user, i) =>
       prisma.student.create({
         data: {
-          name: `Student ${i + 1}`,
+          name: `Student ${String(i + 1).padStart(2, "0")}`,
           email: user.email,
           phone: `123456789${i}`,
+          mobile: mobileNumbers[i],
           gender: i % 2 === 0 ? "MALE" : "FEMALE",
-          division: i % 2 === 0 ? "A" : "B",
-          course: i % 2 === 0 ? "BTech" : "MTech",
-          fromDate: new Date(`2025-07-0${i + 1}`),
-          toDate: new Date(`2025-12-0${i + 1}`),
+          designation: designations[i % designations.length],
+          guardianName: guardianNames[i],
+          ticketNumber: `TKT${String(i + 1).padStart(4, "0")}`,
+          division: divisions[i % divisions.length],
+          course: courses[i % courses.length],
+          fromDate: new Date(
+            `2025-07-${String((i % 20) + 1).padStart(2, "0")}`
+          ),
+          toDate: new Date(`2025-12-${String((i % 20) + 1).padStart(2, "0")}`),
+          bedsheetCount: Math.floor(Math.random() * 3) + 1, // 1-3 bedsheets
+          pillowCount: Math.floor(Math.random() * 2) + 1, // 1-2 pillows
+          blanketCount: Math.floor(Math.random() * 2) + 1, // 1-2 blankets
+          linenIssuedDate: new Date(
+            `2025-07-${String((i % 20) + 1).padStart(2, "0")}`
+          ),
           user: { connect: { id: user.id } },
         },
       })
@@ -599,38 +669,250 @@ async function main() {
     }
   }
 
-  // Create 5 complaints
+  // Create 20 complaints (more than students to show some students have multiple complaints)
+  const complaintSubjects = [
+    "Room AC not working",
+    "Mess food quality",
+    "Water leakage in bathroom",
+    "WiFi connectivity issues",
+    "Noise from neighboring room",
+    "Broken furniture",
+    "Power outage frequently",
+    "Dirty common areas",
+    "Hot water not available",
+    "Room door lock problem",
+    "Pest control needed",
+    "Laundry service delay",
+    "Library timing issues",
+    "Gym equipment broken",
+    "Canteen overpricing",
+    "Parking space shortage",
+    "Security concerns",
+    "Maintenance delay",
+    "Room cleaning service",
+    "Internet speed slow",
+  ];
+
+  const complaintDescriptions = [
+    "The air conditioning unit in my room has not been working for the past 3 days.",
+    "The quality of food served in the mess has deteriorated significantly.",
+    "There is constant water leakage in the bathroom ceiling causing inconvenience.",
+    "WiFi connection keeps dropping frequently affecting my studies and work.",
+    "The students in the adjacent room play loud music till late night.",
+    "The study table in my room has a broken leg and needs immediate replacement.",
+    "Power cuts happen multiple times a day disrupting daily activities.",
+    "Common areas including corridors and lounges are not cleaned regularly.",
+    "Hot water is not available during morning hours when needed most.",
+    "The door lock of my room is jammed and I'm unable to lock it properly.",
+    "There are insects and pests in the room that need professional pest control.",
+    "Laundry service takes too long and clothes are often returned damaged.",
+    "Library closes too early and doesn't cater to our study schedule needs.",
+    "Most of the gym equipment is broken and has not been repaired for months.",
+    "Canteen prices are too high compared to the quality and quantity of food.",
+    "There's insufficient parking space for students' vehicles causing daily hassles.",
+    "Security guards are often absent from their posts creating safety concerns.",
+    "Maintenance requests are taking weeks to be addressed by the staff.",
+    "Room cleaning service is irregular and not up to the expected standards.",
+    "Internet speed is very slow making it difficult to attend online classes.",
+  ];
+
   await Promise.all(
-    Array.from({ length: 5 }).map((_, i) =>
+    Array.from({ length: 20 }).map((_, i) =>
       prisma.complaint.create({
         data: {
-          subject: `Complaint ${i + 1}`,
-          description: `Description for complaint ${i + 1}`,
-          studentId: students[i].id,
+          subject: complaintSubjects[i],
+          description: complaintDescriptions[i],
+          studentId: students[i % students.length].id,
           status:
-            i % 3 === 0 ? "RESOLVED" : i % 3 === 1 ? "REJECTED" : "PENDING",
+            i % 4 === 0
+              ? "RESOLVED"
+              : i % 4 === 1
+              ? "REJECTED"
+              : i % 4 === 2
+              ? "IN_PROGRESS"
+              : "PENDING",
         },
       })
     )
   );
 
-  // Create 5 leaves
+  // Create 25 leaves (some students may have multiple leave applications)
+  const leaveReasons = [
+    "Medical emergency at home",
+    "Wedding ceremony in family",
+    "Festival celebration",
+    "Job interview",
+    "Medical checkup",
+    "Family vacation",
+    "Academic conference",
+    "Personal work",
+    "Sick leave",
+    "Emergency travel",
+    "Religious ceremony",
+    "Cultural event participation",
+    "Sports competition",
+    "Project submission",
+    "Family function",
+    "Health issues",
+    "Official work",
+    "Research work",
+    "Examination preparation",
+    "Training program",
+    "Workshop attendance",
+    "Seminar participation",
+    "Cultural fest",
+    "Technical symposium",
+    "Personal emergency",
+  ];
+
   await Promise.all(
-    Array.from({ length: 5 }).map((_, i) =>
-      prisma.leave.create({
+    Array.from({ length: 25 }).map((_, i) => {
+      const startDay = Math.min(10 + i, 28); // Ensure we don't exceed July days
+      const duration = Math.floor(Math.random() * 3) + 1; // 1-3 days leave
+      const endDay = Math.min(startDay + duration, 31); // Ensure we don't exceed month days
+      return prisma.leave.create({
         data: {
-          fromDate: new Date(`2025-07-${10 + i}`),
-          toDate: new Date(`2025-07-${11 + i}`),
-          reason: `Leave reason ${i + 1}`,
-          studentId: students[i].id,
-          status: i % 2 === 0 ? "PENDING" : "APPROVED",
+          fromDate: new Date(`2025-07-${String(startDay).padStart(2, "0")}`),
+          toDate: new Date(`2025-07-${String(endDay).padStart(2, "0")}`),
+          reason: leaveReasons[i],
+          studentId: students[i % students.length].id,
+          status:
+            i % 3 === 0 ? "PENDING" : i % 3 === 1 ? "APPROVED" : "REJECTED",
         },
-      })
-    )
+      });
+    })
   );
 
   // Create 5 fee payments
   // removed fee payments creation
+
+  // Create some archived students for testing bed occupancy calculations
+  const archivedStudentData = [
+    {
+      originalId: 1001,
+      name: "Archived Student 01",
+      email: "archived1@hostel.com",
+      phone: "9876543300",
+      mobile: "9876543301",
+      gender: "MALE" as const,
+      designation: "Former Student",
+      guardianName: "Parent Name 1",
+      ticketNumber: "TKT1001",
+      division: "A",
+      course: "BTech CSE",
+      fromDate: new Date("2025-06-01"),
+      toDate: new Date("2025-07-15"),
+      bedsheetCount: 2,
+      pillowCount: 1,
+      blanketCount: 1,
+      linenIssuedDate: new Date("2025-06-01"),
+      roomNumber: "45",
+      deletedAt: new Date("2025-07-15"),
+      deletedBy: "admin1@hostel.com",
+      originalCreatedAt: new Date("2025-06-01"),
+      originalUpdatedAt: new Date("2025-07-15"),
+    },
+    {
+      originalId: 1002,
+      name: "Archived Student 02",
+      email: "archived2@hostel.com",
+      phone: "9876543302",
+      mobile: "9876543303",
+      gender: "FEMALE" as const,
+      designation: "Former Student",
+      guardianName: "Parent Name 2",
+      ticketNumber: "TKT1002",
+      division: "B",
+      course: "MTech ECE",
+      fromDate: new Date("2025-05-15"),
+      toDate: new Date("2025-07-20"),
+      bedsheetCount: 2,
+      pillowCount: 1,
+      blanketCount: 2,
+      linenIssuedDate: new Date("2025-05-15"),
+      roomNumber: "101",
+      deletedAt: new Date("2025-07-20"),
+      deletedBy: "admin2@hostel.com",
+      originalCreatedAt: new Date("2025-05-15"),
+      originalUpdatedAt: new Date("2025-07-20"),
+    },
+    {
+      originalId: 1003,
+      name: "Archived Student 03",
+      email: "archived3@hostel.com",
+      phone: "9876543304",
+      mobile: "9876543305",
+      gender: "MALE" as const,
+      designation: "Former Research Scholar",
+      guardianName: "Parent Name 3",
+      ticketNumber: "TKT1003",
+      division: "C",
+      course: "PhD CSE",
+      fromDate: new Date("2025-04-01"),
+      toDate: new Date("2025-07-10"),
+      bedsheetCount: 3,
+      pillowCount: 2,
+      blanketCount: 2,
+      linenIssuedDate: new Date("2025-04-01"),
+      roomNumber: "87",
+      deletedAt: new Date("2025-07-10"),
+      deletedBy: "admin1@hostel.com",
+      originalCreatedAt: new Date("2025-04-01"),
+      originalUpdatedAt: new Date("2025-07-10"),
+    },
+    {
+      originalId: 1004,
+      name: "Archived Student 04",
+      email: "archived4@hostel.com",
+      phone: "9876543306",
+      mobile: "9876543307",
+      gender: "FEMALE" as const,
+      designation: "Former Intern",
+      guardianName: "Parent Name 4",
+      ticketNumber: "TKT1004",
+      division: "D",
+      course: "MCA",
+      fromDate: new Date("2025-06-15"),
+      toDate: new Date("2025-07-25"),
+      bedsheetCount: 1,
+      pillowCount: 1,
+      blanketCount: 1,
+      linenIssuedDate: new Date("2025-06-15"),
+      roomNumber: "63",
+      deletedAt: new Date("2025-07-25"),
+      deletedBy: "admin2@hostel.com",
+      originalCreatedAt: new Date("2025-06-15"),
+      originalUpdatedAt: new Date("2025-07-25"),
+    },
+    {
+      originalId: 1005,
+      name: "Archived Student 05",
+      email: "archived5@hostel.com",
+      phone: "9876543308",
+      mobile: "9876543309",
+      gender: "MALE" as const,
+      designation: "Former Exchange Student",
+      guardianName: "Parent Name 5",
+      ticketNumber: "TKT1005",
+      division: "A",
+      course: "BTech ME",
+      fromDate: new Date("2025-05-01"),
+      toDate: new Date("2025-07-05"),
+      bedsheetCount: 2,
+      pillowCount: 1,
+      blanketCount: 1,
+      linenIssuedDate: new Date("2025-05-01"),
+      roomNumber: "99",
+      deletedAt: new Date("2025-07-05"),
+      deletedBy: "admin1@hostel.com",
+      originalCreatedAt: new Date("2025-05-01"),
+      originalUpdatedAt: new Date("2025-07-05"),
+    },
+  ];
+
+  await Promise.all(
+    archivedStudentData.map((data) => prisma.archivedStudent.create({ data }))
+  );
 
   console.log("Seed data created successfully!");
 }

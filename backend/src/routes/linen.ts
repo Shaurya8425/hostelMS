@@ -13,12 +13,15 @@ linenRoute.get("/inventory", async (c) => {
         bedsheet: 0,
         bedsheetActive: 0,
         bedsheetInHand: 0,
+        bedsheetUsed: 0,
         pillowCover: 0,
         pillowActive: 0,
         pillowInHand: 0,
+        pillowUsed: 0,
         blanket: 0,
         blanketActive: 0,
         blanketInHand: 0,
+        blanketUsed: 0,
       },
     });
   }
@@ -27,7 +30,27 @@ linenRoute.get("/inventory", async (c) => {
 
 // Get detailed linen statistics
 linenRoute.get("/stats", async (c) => {
-  const inventory = await prisma.linenInventory.findFirst();
+  let inventory = await prisma.linenInventory.findFirst();
+  if (!inventory) {
+    // Initialize if not present
+    inventory = await prisma.linenInventory.create({
+      data: {
+        bedsheet: 0,
+        bedsheetActive: 0,
+        bedsheetInHand: 0,
+        bedsheetUsed: 0,
+        pillowCover: 0,
+        pillowActive: 0,
+        pillowInHand: 0,
+        pillowUsed: 0,
+        blanket: 0,
+        blanketActive: 0,
+        blanketInHand: 0,
+        blanketUsed: 0,
+      },
+    });
+  }
+
   const issuedStats = await prisma.student.aggregate({
     _count: {
       _all: true,
@@ -64,8 +87,35 @@ linenRoute.get("/stats", async (c) => {
     take: 10,
   });
 
+  // Calculate totals: total = active + inHand + used
+  const enhancedInventory = {
+    ...inventory,
+    // Calculate total bedsheets (active + inHand + used)
+    bedsheet:
+      inventory.bedsheetActive +
+      inventory.bedsheetInHand +
+      inventory.bedsheetUsed,
+    bedsheetActive: inventory.bedsheetActive,
+    bedsheetInHand: inventory.bedsheetInHand,
+    bedsheetUsed: inventory.bedsheetUsed,
+
+    // Calculate total pillow covers (active + inHand + used)
+    pillowCover:
+      inventory.pillowActive + inventory.pillowInHand + inventory.pillowUsed,
+    pillowActive: inventory.pillowActive,
+    pillowInHand: inventory.pillowInHand,
+    pillowUsed: inventory.pillowUsed,
+
+    // Calculate total blankets (active + inHand + used)
+    blanket:
+      inventory.blanketActive + inventory.blanketInHand + inventory.blanketUsed,
+    blanketActive: inventory.blanketActive,
+    blanketInHand: inventory.blanketInHand,
+    blanketUsed: inventory.blanketUsed,
+  };
+
   return c.json({
-    inventory,
+    inventory: enhancedInventory,
     issuedStats,
     recentIssues,
   });
@@ -98,8 +148,26 @@ linenRoute.post("/issue/:studentId", async (c) => {
   // Start a transaction to ensure data consistency
   const result = await prisma.$transaction(async (tx) => {
     // Get current inventory
-    const inventory = await tx.linenInventory.findFirst();
-    if (!inventory) throw new Error("Inventory not initialized");
+    let inventory = await tx.linenInventory.findFirst();
+    if (!inventory) {
+      // Initialize if not present
+      inventory = await tx.linenInventory.create({
+        data: {
+          bedsheet: 0,
+          bedsheetActive: 0,
+          bedsheetInHand: 0,
+          bedsheetUsed: 0,
+          pillowCover: 0,
+          pillowActive: 0,
+          pillowInHand: 0,
+          pillowUsed: 0,
+          blanket: 0,
+          blanketActive: 0,
+          blanketInHand: 0,
+          blanketUsed: 0,
+        },
+      });
+    }
 
     // Check if we have enough items
     if (inventory.bedsheetInHand < 1 || inventory.pillowInHand < 2) {

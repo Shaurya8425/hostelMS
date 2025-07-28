@@ -11,6 +11,8 @@ import roomRoute from "./routes/room";
 import leaveRoute from "./routes/leave";
 import complaintRoute from "./routes/complaint";
 import linenRoute from "./routes/linen";
+import archivedStudentsRoute from "./routes/archived-students";
+import bedOccupancyRoute from "./routes/bed-occupancy";
 // removed feeRoute import
 
 const app = new Hono();
@@ -28,6 +30,8 @@ app.route("/rooms", roomRoute);
 app.route("/leaves", leaveRoute);
 app.route("/complaints", complaintRoute);
 app.route("/linen", linenRoute);
+app.route("/archived-students", archivedStudentsRoute);
+app.route("/bed-occupancy", bedOccupancyRoute);
 // removed /payments feeRoute
 
 app.get("/", async (c) => {

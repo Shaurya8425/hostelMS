@@ -5,8 +5,9 @@ import axiosInstance from "../../api/axiosInstance";
 import { toast } from "react-toastify";
 import RoomDiagram from "../../components/RoomDiagram";
 import Spinner from "../../components/Spinner";
+import BedOccupancyDashboard from "../../components/BedOccupancyDashboard";
 
-import { getLinenInventory } from "../../api/linenApi";
+import { getLinenStats } from "../../api/linenApi";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -38,9 +39,14 @@ function AdminDashboard() {
   }>({});
   const [loading, setLoading] = useState(true);
   const [linen, setLinen] = useState<{
-    bedsheet: { total: number; active: number; inHand: number };
-    pillowCover: { total: number; active: number; inHand: number };
-    blanket: { total: number; active: number; inHand: number };
+    bedsheet: { total: number; active: number; inHand: number; used: number };
+    pillowCover: {
+      total: number;
+      active: number;
+      inHand: number;
+      used: number;
+    };
+    blanket: { total: number; active: number; inHand: number; used: number };
   } | null>(null);
   const [bedStats, setBedStats] = useState<{
     totalBeds: number;
@@ -64,7 +70,7 @@ function AdminDashboard() {
           axiosInstance.get("/rooms"),
           axiosInstance.get("/leaves"),
           axiosInstance.get("/complaints"),
-          getLinenInventory(),
+          getLinenStats(),
         ]).catch((error) => {
           console.error("API Error:", error.response?.data || error.message);
           throw error;
@@ -124,13 +130,19 @@ function AdminDashboard() {
           studentsRes.data.meta?.totalItems ||
           (Array.isArray(studentsRes.data.data)
             ? studentsRes.data.data.length
+            : Array.isArray(studentsRes.data)
+            ? studentsRes.data.length
             : 0),
         rooms: roomsData.length,
         leaves: Array.isArray(leavesRes.data.data)
           ? leavesRes.data.data.length
+          : Array.isArray(leavesRes.data)
+          ? leavesRes.data.length
           : 0,
         complaints: Array.isArray(complaintsRes.data.data)
           ? complaintsRes.data.data.length
+          : Array.isArray(complaintsRes.data)
+          ? complaintsRes.data.length
           : 0,
       });
 
@@ -142,16 +154,19 @@ function AdminDashboard() {
             total: parseInt(String(linenRes.bedsheet)) || 0,
             active: parseInt(String(linenRes.bedsheetActive)) || 0,
             inHand: parseInt(String(linenRes.bedsheetInHand)) || 0,
+            used: parseInt(String(linenRes.bedsheetUsed)) || 0,
           },
           pillowCover: {
             total: parseInt(String(linenRes.pillowCover)) || 0,
             active: parseInt(String(linenRes.pillowActive)) || 0,
             inHand: parseInt(String(linenRes.pillowInHand)) || 0,
+            used: parseInt(String(linenRes.pillowUsed)) || 0,
           },
           blanket: {
             total: parseInt(String(linenRes.blanket)) || 0,
             active: parseInt(String(linenRes.blanketActive)) || 0,
             inHand: parseInt(String(linenRes.blanketInHand)) || 0,
+            used: parseInt(String(linenRes.blanketUsed)) || 0,
           },
         });
       }
@@ -375,7 +390,7 @@ function AdminDashboard() {
                     <h4 className='text-md font-medium mb-4 text-gray-800'>
                       {wing}
                     </h4>
-                    <div className='w-48 h-48'>
+                    <div className='w-56 h-56'>
                       <Pie
                         data={{
                           labels: ["Available", "Occupied"],
@@ -516,18 +531,7 @@ function AdminDashboard() {
                       labels: ["Bedsheets", "Pillow Covers", "Blankets"],
                       datasets: [
                         {
-                          label: "Total",
-                          data: linen
-                            ? [
-                                linen.bedsheet.total,
-                                linen.pillowCover.total,
-                                linen.blanket.total,
-                              ]
-                            : [],
-                          backgroundColor: "#3b82f6",
-                        },
-                        {
-                          label: "In Stock",
+                          label: "Available",
                           data: linen
                             ? [
                                 linen.bedsheet.inHand,
@@ -548,6 +552,17 @@ function AdminDashboard() {
                             : [],
                           backgroundColor: "#f97316",
                         },
+                        {
+                          label: "Used",
+                          data: linen
+                            ? [
+                                linen.bedsheet.used,
+                                linen.pillowCover.used,
+                                linen.blanket.used,
+                              ]
+                            : [],
+                          backgroundColor: "#dc2626",
+                        },
                       ],
                     }}
                     options={{
@@ -560,6 +575,31 @@ function AdminDashboard() {
                         tooltip: {
                           mode: "index",
                           intersect: false,
+                          callbacks: {
+                            label: (context) => {
+                              const datasetLabel = context.dataset.label || "";
+                              const value = (context.raw as number) || 0;
+                              const itemIndex = context.dataIndex;
+
+                              // Get total for the specific item (bedsheet, pillow, blanket)
+                              let total = 0;
+                              if (linen) {
+                                if (itemIndex === 0)
+                                  total = linen.bedsheet.total; // Bedsheets
+                                else if (itemIndex === 1)
+                                  total = linen.pillowCover.total;
+                                // Pillow Covers
+                                else if (itemIndex === 2)
+                                  total = linen.blanket.total; // Blankets
+                              }
+
+                              const percentage =
+                                total > 0
+                                  ? ((value / total) * 100).toFixed(1)
+                                  : "0.0";
+                              return `${datasetLabel}: ${value} (${percentage}%)`;
+                            },
+                          },
                         },
                       },
                       scales: {
@@ -582,26 +622,137 @@ function AdminDashboard() {
             </div>
 
             <div className='text-center text-gray-600 pt-4 border-t w-full'>
-              <p className='font-medium'>
-                Total Items In Stock:{" "}
-                {linen
-                  ? linen.bedsheet.inHand +
-                    linen.pillowCover.inHand +
-                    linen.blanket.inHand
-                  : 0}
+              <p className='font-medium text-lg mb-2'>
+                Linen Inventory Summary
               </p>
-              <p className='text-sm'>
-                Bedsheets: {linen?.bedsheet.inHand || 0} /{" "}
-                {linen?.bedsheet.total || 0} (Active:{" "}
-                {linen?.bedsheet.active || 0}) | Pillow Covers:{" "}
-                {linen?.pillowCover.inHand || 0} /{" "}
-                {linen?.pillowCover.total || 0} (Active:{" "}
-                {linen?.pillowCover.active || 0}) | Blankets:{" "}
-                {linen?.blanket.inHand || 0} / {linen?.blanket.total || 0}{" "}
-                (Active: {linen?.blanket.active || 0})
-              </p>
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-4 text-sm'>
+                <div className='bg-blue-50 p-3 rounded-lg'>
+                  <p className='font-semibold text-blue-800'>Bedsheets</p>
+                  <p className='text-blue-600'>
+                    Total: {linen?.bedsheet.total || 0}
+                  </p>
+                  <p className='text-green-600'>
+                    Available: {linen?.bedsheet.inHand || 0} (
+                    {linen?.bedsheet.total
+                      ? (
+                          (linen.bedsheet.inHand / linen.bedsheet.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                  <p className='text-orange-600'>
+                    In Use: {linen?.bedsheet.active || 0} (
+                    {linen?.bedsheet.total
+                      ? (
+                          (linen.bedsheet.active / linen.bedsheet.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                  <p className='text-red-600'>
+                    Used: {linen?.bedsheet.used || 0} (
+                    {linen?.bedsheet.total
+                      ? (
+                          (linen.bedsheet.used / linen.bedsheet.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                </div>
+                <div className='bg-green-50 p-3 rounded-lg'>
+                  <p className='font-semibold text-green-800'>Pillow Covers</p>
+                  <p className='text-blue-600'>
+                    Total: {linen?.pillowCover.total || 0}
+                  </p>
+                  <p className='text-green-600'>
+                    Available: {linen?.pillowCover.inHand || 0} (
+                    {linen?.pillowCover.total
+                      ? (
+                          (linen.pillowCover.inHand / linen.pillowCover.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                  <p className='text-orange-600'>
+                    In Use: {linen?.pillowCover.active || 0} (
+                    {linen?.pillowCover.total
+                      ? (
+                          (linen.pillowCover.active / linen.pillowCover.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                  <p className='text-red-600'>
+                    Used: {linen?.pillowCover.used || 0} (
+                    {linen?.pillowCover.total
+                      ? (
+                          (linen.pillowCover.used / linen.pillowCover.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                </div>
+                <div className='bg-purple-50 p-3 rounded-lg'>
+                  <p className='font-semibold text-purple-800'>Blankets</p>
+                  <p className='text-blue-600'>
+                    Total: {linen?.blanket.total || 0}
+                  </p>
+                  <p className='text-green-600'>
+                    Available: {linen?.blanket.inHand || 0} (
+                    {linen?.blanket.total
+                      ? (
+                          (linen.blanket.inHand / linen.blanket.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                  <p className='text-orange-600'>
+                    In Use: {linen?.blanket.active || 0} (
+                    {linen?.blanket.total
+                      ? (
+                          (linen.blanket.active / linen.blanket.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                  <p className='text-red-600'>
+                    Used: {linen?.blanket.used || 0} (
+                    {linen?.blanket.total
+                      ? (
+                          (linen.blanket.used / linen.blanket.total) *
+                          100
+                        ).toFixed(1)
+                      : "0.0"}
+                    %)
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Bed Days Occupancy Analysis */}
+        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-full mx-auto w-full'>
+          <div className='flex justify-between items-center mb-4'>
+            <h2 className='text-xl font-bold text-blue-800'>
+              Bed Days Occupancy Analysis
+            </h2>
+            <button
+              onClick={() => navigate("/admin/bed-occupancy")}
+              className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium'
+            >
+              View Detailed Analysis
+            </button>
+          </div>
+          <BedOccupancyDashboard summaryOnly={true} />
         </div>
 
         <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-4xl mx-auto w-full'>
