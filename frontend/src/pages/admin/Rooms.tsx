@@ -49,14 +49,14 @@ export default function AdminRooms() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [form, setForm] = useState({
+  /* const [form, setForm] = useState({
     roomNumber: "",
     block: "",
     floor: 0,
     designation: "",
     capacity: 1,
     status: "AVAILABLE" as Room["status"],
-  });
+  }); */
   const [assignForm, setAssignForm] = useState<AssignForm>({
     studentId: null,
     roomId: null,
@@ -158,7 +158,7 @@ export default function AdminRooms() {
     fetchStudents();
   }, [debouncedSearch, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCreate = async (e: React.FormEvent) => {
+  /* const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -186,7 +186,7 @@ export default function AdminRooms() {
       toast.error("Failed to create room");
       setLoading(false);
     }
-  };
+  }; */
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
