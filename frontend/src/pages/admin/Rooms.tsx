@@ -43,6 +43,7 @@ import SkeletonRooms from "../../components/skeleton/admin/SkeletonRooms";
 
 export default function AdminRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [allRooms, setAllRooms] = useState<Room[]>([]); // Added state for all rooms
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -106,6 +107,25 @@ export default function AdminRooms() {
     }
   };
 
+  const fetchAllRooms = async () => {
+    try {
+      // Fetch all rooms without pagination for the dropdown
+      const res = await axios.get(`${API_BASE}/rooms?limit=1000`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.data.data) {
+        setAllRooms(res.data.data);
+      } else {
+        // Fallback for old API response format
+        setAllRooms(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch all rooms:", err);
+      toast.error("Failed to fetch room data for assignment");
+    }
+  };
+
   const fetchStudents = async () => {
     try {
       // Request all students with their room information
@@ -134,6 +154,7 @@ export default function AdminRooms() {
 
   useEffect(() => {
     fetchRooms();
+    fetchAllRooms(); // Fetch all rooms for the dropdown
     fetchStudents();
   }, [debouncedSearch, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -160,6 +181,7 @@ export default function AdminRooms() {
         status: "AVAILABLE",
       });
       fetchRooms();
+      fetchAllRooms(); // Update all rooms after creating a new one
     } catch (err) {
       toast.error("Failed to create room");
       setLoading(false);
@@ -199,7 +221,7 @@ export default function AdminRooms() {
       setAssignForm({ studentId: null, roomId: null });
 
       // Refresh data
-      await Promise.all([fetchRooms(), fetchStudents()]);
+      await Promise.all([fetchRooms(), fetchStudents(), fetchAllRooms()]);
     } catch (err: any) {
       console.error("Assignment error:", err);
 
@@ -447,7 +469,7 @@ export default function AdminRooms() {
               required
             >
               <option value=''>Choose a room...</option>
-              {rooms
+              {allRooms
                 .filter(
                   (room) =>
                     room.status !== "BLOCKED" &&
