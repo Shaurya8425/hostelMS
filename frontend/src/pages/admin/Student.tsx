@@ -30,6 +30,7 @@ interface Student {
   pillowCount: number;
   blanketCount: number;
   linenIssuedDate: string | null;
+  roomNumber: string | null;
   room: any; // Add proper type if needed
   complaints: any[]; // Add proper type if needed
   leaves: any[]; // Add proper type if needed
@@ -46,7 +47,9 @@ export default function AdminStudents() {
     []
   );
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [archivedSearch, setArchivedSearch] = useState("");
+  const [debouncedArchivedSearch, setDebouncedArchivedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [archivedPage, setArchivedPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,6 +66,7 @@ export default function AdminStudents() {
     ticketNumber: string;
     division: string;
     course: string;
+    roomNumber: string;
     fromDate: string;
     toDate: string;
     bedsheetCount: number;
@@ -81,6 +85,7 @@ export default function AdminStudents() {
     ticketNumber: "",
     division: "",
     course: "",
+    roomNumber: "",
     fromDate: "",
     toDate: "",
     bedsheetCount: 1, // Default 1 bedsheet
@@ -101,6 +106,7 @@ export default function AdminStudents() {
     ticketNumber: "",
     division: "",
     course: "",
+    roomNumber: "",
     fromDate: "",
     toDate: "",
     bedsheetCount: 0,
@@ -137,7 +143,7 @@ export default function AdminStudents() {
       }
 
       const res = await axiosInstance.get(
-        `/students?search=${search}&page=${page}&limit=20`
+        `/students?search=${debouncedSearch}&page=${page}&limit=20`
       );
 
       console.log("Full API response:", res);
@@ -176,7 +182,7 @@ export default function AdminStudents() {
       }
 
       const response = await getArchivedStudents(
-        archivedSearch,
+        debouncedArchivedSearch,
         archivedPage,
         10
       );
@@ -221,6 +227,32 @@ export default function AdminStudents() {
     }
   }, [token]);
 
+  // Debounce search inputs
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedArchivedSearch(archivedSearch);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [archivedSearch]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setArchivedPage(1);
+  }, [debouncedArchivedSearch]);
+
   useEffect(() => {
     if (activeTab === "current") {
       fetchStudents();
@@ -228,7 +260,7 @@ export default function AdminStudents() {
       fetchArchivedStudents();
     }
     // eslint-disable-next-line
-  }, [search, page, archivedSearch, archivedPage, activeTab]);
+  }, [debouncedSearch, page, debouncedArchivedSearch, archivedPage, activeTab]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -330,6 +362,7 @@ export default function AdminStudents() {
         ticketNumber: form.ticketNumber.trim() || null,
         division: form.division.trim() || null,
         course: form.course.trim() || null,
+        roomNumber: form.roomNumber.trim() || null,
         fromDate: form.fromDate ? new Date(form.fromDate).toISOString() : null,
         toDate: form.toDate ? new Date(form.toDate).toISOString() : null,
         bedsheetCount: Math.max(
@@ -489,6 +522,7 @@ export default function AdminStudents() {
       ticketNumber: student.ticketNumber || "",
       division: student.division || "",
       course: student.course || "",
+      roomNumber: student.roomNumber || "",
       fromDate: student.fromDate || "",
       toDate: student.toDate || "",
       bedsheetCount: student.bedsheetCount,
@@ -816,6 +850,20 @@ export default function AdminStudents() {
 
             <div className='space-y-1'>
               <label className='block text-sm font-medium text-gray-700'>
+                Room No.
+              </label>
+              <input
+                type='text'
+                name='roomNumber'
+                value={form.roomNumber}
+                onChange={handleChange}
+                className='w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                placeholder='e.g., 101, A-203, etc.'
+              />
+            </div>
+
+            <div className='space-y-1'>
+              <label className='block text-sm font-medium text-gray-700'>
                 From Date
               </label>
               <input
@@ -980,6 +1028,7 @@ export default function AdminStudents() {
                   <th className='p-2 border-b'>Ticket #</th>
                   <th className='p-2 border-b'>Division</th>
                   <th className='p-2 border-b'>Course</th>
+                  <th className='p-2 border-b'>Room No.</th>
                   <th className='p-2 border-b'>Linen Inventory</th>
                   <th className='p-2 border-b'>Actions</th>
                 </tr>
@@ -1065,6 +1114,15 @@ export default function AdminStudents() {
                           />
                         </td>
                         <td className='p-2 border min-w-0'>
+                          <input
+                            type='text'
+                            name='roomNumber'
+                            value={editForm.roomNumber || ""}
+                            onChange={handleEditFormChange}
+                            className='p-1 border rounded w-full min-w-0 max-w-xs'
+                          />
+                        </td>
+                        <td className='p-2 border min-w-0'>
                           <div className='space-y-2'>
                             <div>
                               <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -1144,6 +1202,7 @@ export default function AdminStudents() {
                         <td className='p-2'>{s.ticketNumber || "-"}</td>
                         <td className='p-2'>{s.division || "-"}</td>
                         <td className='p-2'>{s.course || "-"}</td>
+                        <td className='p-2'>{s.roomNumber || "-"}</td>
                         <td className='p-2'>
                           <div className='space-y-1'>
                             <div className='flex items-center gap-2'>
@@ -1226,7 +1285,7 @@ export default function AdminStudents() {
                 ))}
                 {students.length === 0 && (
                   <tr>
-                    <td className='p-4 text-center' colSpan={10}>
+                    <td className='p-4 text-center' colSpan={11}>
                       No students found
                     </td>
                   </tr>
@@ -1305,6 +1364,14 @@ export default function AdminStudents() {
                           type='text'
                           name='course'
                           value={editForm.course}
+                          onChange={handleEditFormChange}
+                          className='p-1 border rounded w-full'
+                        />
+                        <span className='font-semibold'>Room No.:</span>
+                        <input
+                          type='text'
+                          name='roomNumber'
+                          value={editForm.roomNumber}
                           onChange={handleEditFormChange}
                           className='p-1 border rounded w-full'
                         />
@@ -1403,6 +1470,8 @@ export default function AdminStudents() {
                         <span>{s.division || "-"}</span>
                         <span className='font-semibold'>Course:</span>
                         <span>{s.course || "-"}</span>
+                        <span className='font-semibold'>Room No.:</span>
+                        <span>{s.roomNumber || "-"}</span>
                         <span className='font-semibold'>Linen Inventory:</span>
                         <div>
                           <div>Bedsheets: {s.bedsheetCount} issued</div>

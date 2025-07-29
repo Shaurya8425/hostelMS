@@ -13,22 +13,57 @@ interface Complaint {
   student: {
     id: number;
     name: string;
-    rollNumber: string;
+    email: string;
   };
 }
 
 export default function AdminComplaints() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
 
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/complaints`, {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(statusFilter !== "ALL" && { status: statusFilter }),
+      });
+
+      const res = await axios.get(`${API_BASE}/complaints?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setComplaints(res.data.data);
+
+      if (res.data.data) {
+        setComplaints(res.data.data);
+        setTotalPages(res.data.pagination.totalPages);
+        setTotal(res.data.pagination.total);
+      } else {
+        // Fallback for old API response format
+        setComplaints(res.data.data || []);
+      }
     } catch (err) {
       toast.error("Failed to fetch complaints");
     } finally {
@@ -55,7 +90,7 @@ export default function AdminComplaints() {
 
   useEffect(() => {
     fetchComplaints();
-  }, []);
+  }, [debouncedSearch, statusFilter, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <SkeletonComplaints />;
 
@@ -64,7 +99,32 @@ export default function AdminComplaints() {
       <h1 className='text-2xl sm:text-3xl font-extrabold mb-6 text-blue-900'>
         Complaint Management
       </h1>
+
+      {/* Search and Filter Bar */}
+      <div className='mb-6 flex flex-col sm:flex-row gap-4'>
+        <input
+          type='text'
+          placeholder='Search complaints by subject, description, or student...'
+          className='border px-4 py-2 rounded flex-1 shadow-sm'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className='border px-4 py-2 rounded shadow-sm'
+        >
+          <option value='ALL'>All Status</option>
+          <option value='PENDING'>Pending</option>
+          <option value='RESOLVED'>Resolved</option>
+          <option value='REJECTED'>Rejected</option>
+        </select>
+      </div>
+
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
+        <div className='mb-4 text-sm text-gray-600'>
+          Showing {complaints.length} of {total} complaints
+        </div>
         {/* Table for desktop */}
         <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
@@ -83,8 +143,11 @@ export default function AdminComplaints() {
                 <td className='p-2'>{c.description}</td>
                 <td className='p-2'>
                   <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
-                    {c.student.name} ({c.student.rollNumber})
+                    {c.student.name}
                   </span>
+                  <div className='text-xs text-gray-500 mt-1'>
+                    {c.student.email}
+                  </div>
                 </td>
                 <td className='p-2'>
                   <span
@@ -136,10 +199,12 @@ export default function AdminComplaints() {
               <div className='flex justify-between mb-1'>
                 <span className='font-bold'>{c.subject}</span>
                 <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
-                  {c.student.name} ({c.student.rollNumber})
+                  {c.student.name}
                 </span>
               </div>
               <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                <span className='font-semibold'>Student Email:</span>
+                <span>{c.student.email}</span>
                 <span className='font-semibold'>Description:</span>
                 <span>{c.description}</span>
                 <span className='font-semibold'>Status:</span>
@@ -179,6 +244,27 @@ export default function AdminComplaints() {
             <div className='p-4 text-center'>No complaints found</div>
           )}
         </div>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className='flex flex-col sm:flex-row justify-between items-center mt-6 gap-4'>
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
+        >
+          Previous
+        </button>
+        <p className='font-semibold'>
+          Page {page} of {totalPages}
+        </p>
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
+        >
+          Next
+        </button>
       </div>
     </div>
   );

@@ -14,22 +14,57 @@ interface Leave {
   student: {
     id: number;
     name: string;
-    rollNumber: string;
+    email: string;
   };
 }
 
 export default function AdminLeaves() {
   const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
 
   const fetchLeaves = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/leaves`, {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(statusFilter !== "ALL" && { status: statusFilter }),
+      });
+
+      const res = await axios.get(`${API_BASE}/leaves?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setLeaves(res.data.data);
+
+      if (res.data.data) {
+        setLeaves(res.data.data);
+        setTotalPages(res.data.pagination.totalPages);
+        setTotal(res.data.pagination.total);
+      } else {
+        // Fallback for old API response format
+        setLeaves(res.data.data || []);
+      }
     } catch (err) {
       toast.error("Failed to fetch leave applications");
     } finally {
@@ -39,7 +74,7 @@ export default function AdminLeaves() {
 
   useEffect(() => {
     fetchLeaves();
-  }, []);
+  }, [debouncedSearch, statusFilter, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStatusUpdate = async (
     id: number,
@@ -69,13 +104,38 @@ export default function AdminLeaves() {
       <h1 className='text-2xl sm:text-3xl font-extrabold mb-6 text-blue-900'>
         Leave Applications
       </h1>
+
+      {/* Search and Filter Bar */}
+      <div className='mb-6 flex flex-col sm:flex-row gap-4'>
+        <input
+          type='text'
+          placeholder='Search leaves by reason or student name...'
+          className='border px-4 py-2 rounded flex-1 shadow-sm'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className='border px-4 py-2 rounded shadow-sm'
+        >
+          <option value='ALL'>All Status</option>
+          <option value='PENDING'>Pending</option>
+          <option value='APPROVED'>Approved</option>
+          <option value='REJECTED'>Rejected</option>
+        </select>
+      </div>
+
       <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
+        <div className='mb-4 text-sm text-gray-600'>
+          Showing {leaves.length} of {total} leave applications
+        </div>
         {/* Table for desktop */}
         <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
               <th className='p-2 border-b'>Student</th>
-              <th className='p-2 border-b'>Roll No</th>
+              <th className='p-2 border-b'>Email</th>
               <th className='p-2 border-b'>From</th>
               <th className='p-2 border-b'>To</th>
               <th className='p-2 border-b'>Reason</th>
@@ -94,7 +154,7 @@ export default function AdminLeaves() {
                     {leave.student.name}
                   </span>
                 </td>
-                <td className='p-2'>{leave.student.rollNumber}</td>
+                <td className='p-2'>{leave.student.email}</td>
                 <td className='p-2'>
                   {new Date(leave.fromDate).toDateString()}
                 </td>
@@ -114,7 +174,7 @@ export default function AdminLeaves() {
                   </span>
                 </td>
                 <td className='p-2 space-x-2'>
-                  {leave.status === "PENDING" && (
+                  {leave.status === "PENDING" ? (
                     <>
                       <button
                         onClick={() => handleStatusUpdate(leave.id, "APPROVED")}
@@ -129,6 +189,12 @@ export default function AdminLeaves() {
                         Reject
                       </button>
                     </>
+                  ) : (
+                    <span className='text-gray-500 text-sm'>
+                      {leave.status === "APPROVED"
+                        ? "✓ Approved"
+                        : "✗ Rejected"}
+                    </span>
                   )}
                 </td>
               </tr>
@@ -152,7 +218,7 @@ export default function AdminLeaves() {
               <div className='flex justify-between mb-1'>
                 <span className='font-bold'>{leave.student.name}</span>
                 <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
-                  {leave.student.rollNumber}
+                  {leave.student.email}
                 </span>
               </div>
               <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
@@ -177,7 +243,7 @@ export default function AdminLeaves() {
                   </span>
                 </span>
               </div>
-              {leave.status === "PENDING" && (
+              {leave.status === "PENDING" ? (
                 <div className='flex gap-2 mt-2'>
                   <button
                     onClick={() => handleStatusUpdate(leave.id, "APPROVED")}
@@ -192,6 +258,12 @@ export default function AdminLeaves() {
                     Reject
                   </button>
                 </div>
+              ) : (
+                <div className='mt-2'>
+                  <span className='text-gray-500 text-sm'>
+                    {leave.status === "APPROVED" ? "✓ Approved" : "✗ Rejected"}
+                  </span>
+                </div>
               )}
             </div>
           ))}
@@ -199,6 +271,27 @@ export default function AdminLeaves() {
             <div className='p-4 text-center'>No leave applications found.</div>
           )}
         </div>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className='flex flex-col sm:flex-row justify-between items-center mt-6 gap-4'>
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
+        >
+          Previous
+        </button>
+        <p className='font-semibold'>
+          Page {page} of {totalPages}
+        </p>
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
+        >
+          Next
+        </button>
       </div>
     </div>
   );

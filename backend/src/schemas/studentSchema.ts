@@ -12,6 +12,7 @@ export const studentSchema = z.object({
   ticketNumber: z.string().optional().nullable(),
   division: z.string().optional().nullable(),
   course: z.string().optional().nullable(),
+  roomNumber: z.string().optional().nullable(),
   fromDate: z.coerce.date().optional().nullable(),
   toDate: z.coerce.date().optional().nullable(),
   bedsheetCount: z.number().min(0).max(5).default(0),

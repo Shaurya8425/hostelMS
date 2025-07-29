@@ -66,10 +66,10 @@ function AdminDashboard() {
       // Fetch all data in parallel
       const [studentsRes, roomsRes, leavesRes, complaintsRes, linenRes] =
         await Promise.all([
-          axiosInstance.get("/students"),
-          axiosInstance.get("/rooms"),
-          axiosInstance.get("/leaves"),
-          axiosInstance.get("/complaints"),
+          axiosInstance.get("/students?limit=1000"),
+          axiosInstance.get("/rooms?limit=1000"),
+          axiosInstance.get("/leaves?limit=1000"),
+          axiosInstance.get("/complaints?limit=1000"),
           getLinenStats(),
         ]).catch((error) => {
           console.error("API Error:", error.response?.data || error.message);
@@ -91,12 +91,23 @@ function AdminDashboard() {
         : roomsRes.data.data || [];
       console.log("Room data:", roomsData);
 
-      // Calculate bed stats
-      const totalBeds = roomsData.reduce(
+      // Calculate bed stats - only include rooms with capacity > 0
+      const roomsWithBeds = roomsData.filter(
+        (room: any) => Number(room.capacity) > 0
+      );
+      console.log(
+        "Rooms with beds:",
+        roomsWithBeds.length,
+        "out of",
+        roomsData.length,
+        "total rooms"
+      );
+
+      const totalBeds = roomsWithBeds.reduce(
         (acc: number, room: any) => acc + (Number(room.capacity) || 0),
         0
       );
-      const occupiedBeds = roomsData.reduce(
+      const occupiedBeds = roomsWithBeds.reduce(
         (acc: number, room: any) =>
           acc +
           ((Array.isArray(room.students) ? room.students.length : 0) || 0),
@@ -112,16 +123,26 @@ function AdminDashboard() {
       const wingStats: {
         [key: string]: { totalBeds: number; occupiedBeds: number };
       } = {};
+      console.log(
+        "Processing room data for wing stats:",
+        roomsData.length,
+        "rooms"
+      );
       roomsData.forEach((room: any) => {
-        const wing = room.block;
-        if (!wingStats[wing]) {
-          wingStats[wing] = { totalBeds: 0, occupiedBeds: 0 };
+        const roomCapacity = Number(room.capacity) || 0;
+        // Only process rooms with actual bed capacity
+        if (roomCapacity > 0) {
+          const wing = room.block;
+          if (!wingStats[wing]) {
+            wingStats[wing] = { totalBeds: 0, occupiedBeds: 0 };
+          }
+          wingStats[wing].totalBeds += roomCapacity;
+          wingStats[wing].occupiedBeds +=
+            (Array.isArray(room.students) ? room.students.length : 0) || 0;
         }
-        wingStats[wing].totalBeds += Number(room.capacity) || 0;
-        wingStats[wing].occupiedBeds +=
-          (Array.isArray(room.students) ? room.students.length : 0) || 0;
       });
 
+      console.log("Wing stats calculated:", wingStats);
       setWingStats(wingStats);
 
       // Set dashboard stats
@@ -383,72 +404,79 @@ function AdminDashboard() {
               Wing-wise Occupancy
             </h3>
             <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-              {Object.entries(wingStats)
-                .sort(([wingA], [wingB]) => wingA.localeCompare(wingB))
-                .map(([wing, stats]) => (
-                  <div key={wing} className='flex flex-col items-center'>
-                    <h4 className='text-md font-medium mb-4 text-gray-800'>
-                      {wing}
-                    </h4>
-                    <div className='w-56 h-56'>
-                      <Pie
-                        data={{
-                          labels: ["Available", "Occupied"],
-                          datasets: [
-                            {
-                              data: [
-                                stats.totalBeds - stats.occupiedBeds,
-                                stats.occupiedBeds,
-                              ],
-                              backgroundColor: ["#22c55e", "#ef4444"],
-                              borderColor: ["#16a34a", "#dc2626"],
-                              borderWidth: 1,
-                            },
-                          ],
-                        }}
-                        options={{
-                          responsive: true,
-                          plugins: {
-                            legend: {
-                              position: "bottom",
-                              labels: {
-                                font: {
-                                  size: 11,
+              {wingStats && Object.keys(wingStats).length > 0 ? (
+                Object.entries(wingStats)
+                  .filter(([_, stats]) => stats && stats.totalBeds > 0) // Only show wings with beds
+                  .sort(([wingA], [wingB]) => wingA.localeCompare(wingB))
+                  .map(([wing, stats]) => (
+                    <div key={wing} className='flex flex-col items-center'>
+                      <h4 className='text-md font-medium mb-4 text-gray-800'>
+                        {wing}
+                      </h4>
+                      <div className='w-56 h-56'>
+                        <Pie
+                          data={{
+                            labels: ["Available", "Occupied"],
+                            datasets: [
+                              {
+                                data: [
+                                  stats.totalBeds - stats.occupiedBeds,
+                                  stats.occupiedBeds,
+                                ],
+                                backgroundColor: ["#22c55e", "#ef4444"],
+                                borderColor: ["#16a34a", "#dc2626"],
+                                borderWidth: 1,
+                              },
+                            ],
+                          }}
+                          options={{
+                            responsive: true,
+                            plugins: {
+                              legend: {
+                                position: "bottom",
+                                labels: {
+                                  font: {
+                                    size: 11,
+                                  },
+                                },
+                              },
+                              tooltip: {
+                                callbacks: {
+                                  label: (context) => {
+                                    const label = context.label || "";
+                                    const value = context.raw || 0;
+                                    const total = stats.totalBeds;
+                                    const percentage =
+                                      total > 0
+                                        ? (
+                                            ((value as number) / total) *
+                                            100
+                                          ).toFixed(1)
+                                        : "0";
+                                    return `${label}: ${value} (${percentage}%)`;
+                                  },
                                 },
                               },
                             },
-                            tooltip: {
-                              callbacks: {
-                                label: (context) => {
-                                  const label = context.label || "";
-                                  const value = context.raw || 0;
-                                  const total = stats.totalBeds;
-                                  const percentage =
-                                    total > 0
-                                      ? (
-                                          ((value as number) / total) *
-                                          100
-                                        ).toFixed(1)
-                                      : "0";
-                                  return `${label}: ${value} (${percentage}%)`;
-                                },
-                              },
-                            },
-                          },
-                        }}
-                      />
+                          }}
+                        />
+                      </div>
+                      <div className='mt-3 text-center text-gray-600'>
+                        <p className='font-medium text-sm'>
+                          Total: {stats.totalBeds} beds
+                        </p>
+                        <p className='text-xs'>
+                          Available: {stats.totalBeds - stats.occupiedBeds} |
+                          Occupied: {stats.occupiedBeds}
+                        </p>
+                      </div>
                     </div>
-                    <div className='mt-3 text-center text-gray-600'>
-                      <p className='font-medium text-sm'>
-                        Total: {stats.totalBeds} beds
-                      </p>
-                      <p className='text-xs'>
-                        Available: {stats.totalBeds - stats.occupiedBeds} |
-                        Occupied: {stats.occupiedBeds}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+              ) : (
+                <div className='col-span-3 text-center text-gray-500'>
+                  No wing data available
+                </div>
+              )}
             </div>
           </div>
         </div>

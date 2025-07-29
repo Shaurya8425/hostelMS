@@ -39,17 +39,62 @@ complaintRoute.post("/", async (c) => {
   return c.json({ success: true, data: complaint });
 });
 
-// GET /complaints - Admin views all complaints
+// GET /complaints - Admin views all complaints with pagination
 complaintRoute.get("/", async (c) => {
-  const complaints = await prisma.complaint.findMany({
-    include: {
-      student: true,
-    },
-    orderBy: {
-      createdAt: "desc",
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = parseInt(c.req.query("limit") || "10");
+  const search = c.req.query("search") || "";
+  const status = c.req.query("status") || "";
+
+  const skip = (page - 1) * limit;
+
+  // Build where clause for search and filter
+  const whereClause: any = {};
+
+  if (search) {
+    whereClause.OR = [
+      { subject: { contains: search, mode: "insensitive" as const } },
+      { description: { contains: search, mode: "insensitive" as const } },
+      { student: { name: { contains: search, mode: "insensitive" as const } } },
+      {
+        student: { email: { contains: search, mode: "insensitive" as const } },
+      },
+    ];
+  }
+
+  if (status && status !== "ALL") {
+    whereClause.status = status;
+  }
+
+  const [complaints, total] = await Promise.all([
+    prisma.complaint.findMany({
+      where: whereClause,
+      include: {
+        student: true,
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.complaint.count({ where: whereClause }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return c.json({
+    success: true,
+    data: complaints,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
     },
   });
-  return c.json({ success: true, data: complaints });
 });
 
 // GET /complaints/:id - View one complaint

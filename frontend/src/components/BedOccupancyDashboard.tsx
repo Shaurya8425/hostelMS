@@ -95,13 +95,40 @@ const BedOccupancyDashboard = ({
   // Bar chart data for wing-wise occupancy
   const barChartData = occupancyData
     ? {
-        labels: Object.keys(occupancyData.wingStats),
+        labels: Object.keys(occupancyData.wingStats).sort((a, b) => {
+          // Custom sort to ensure A, B, C order
+          const order = ["A", "B", "C"];
+          const indexA = order.indexOf(a);
+          const indexB = order.indexOf(b);
+
+          // If both wings are in our order array, sort by their position
+          if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+          }
+          // If only one is in order array, prioritize it
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          // If neither is in order array, fall back to alphabetical
+          return a.localeCompare(b);
+        }),
         datasets: [
           {
             label: "Total Beds",
-            data: Object.values(occupancyData.wingStats).map(
-              (wing: any) => wing.totalBeds
-            ),
+            data: Object.keys(occupancyData.wingStats)
+              .sort((a, b) => {
+                // Same custom sort for consistency
+                const order = ["A", "B", "C"];
+                const indexA = order.indexOf(a);
+                const indexB = order.indexOf(b);
+
+                if (indexA !== -1 && indexB !== -1) {
+                  return indexA - indexB;
+                }
+                if (indexA !== -1) return -1;
+                if (indexB !== -1) return 1;
+                return a.localeCompare(b);
+              })
+              .map((key) => occupancyData.wingStats[key].totalBeds),
             backgroundColor: "rgba(34, 197, 94, 0.6)",
             borderColor: "rgba(34, 197, 94, 1)",
             borderWidth: 1,
@@ -109,9 +136,21 @@ const BedOccupancyDashboard = ({
           },
           {
             label: "Occupancy Percentage",
-            data: Object.values(occupancyData.wingStats).map(
-              (wing: any) => wing.occupancyPercentage
-            ),
+            data: Object.keys(occupancyData.wingStats)
+              .sort((a, b) => {
+                // Same custom sort for consistency
+                const order = ["A", "B", "C"];
+                const indexA = order.indexOf(a);
+                const indexB = order.indexOf(b);
+
+                if (indexA !== -1 && indexB !== -1) {
+                  return indexA - indexB;
+                }
+                if (indexA !== -1) return -1;
+                if (indexB !== -1) return 1;
+                return a.localeCompare(b);
+              })
+              .map((key) => occupancyData.wingStats[key].occupancyPercentage),
             backgroundColor: "rgba(59, 130, 246, 0.6)",
             borderColor: "rgba(59, 130, 246, 1)",
             borderWidth: 1,
@@ -362,8 +401,24 @@ const BedOccupancyDashboard = ({
                         </tr>
                       </thead>
                       <tbody className='bg-white divide-y divide-gray-200'>
-                        {Object.entries(occupancyData.wingStats).map(
-                          ([wing, stats]: [string, any]) => (
+                        {Object.entries(occupancyData.wingStats)
+                          .sort(([wingA], [wingB]) => {
+                            // Custom sort to ensure A, B, C order
+                            const order = ["A", "B", "C"];
+                            const indexA = order.indexOf(wingA);
+                            const indexB = order.indexOf(wingB);
+
+                            // If both wings are in our order array, sort by their position
+                            if (indexA !== -1 && indexB !== -1) {
+                              return indexA - indexB;
+                            }
+                            // If only one is in order array, prioritize it
+                            if (indexA !== -1) return -1;
+                            if (indexB !== -1) return 1;
+                            // If neither is in order array, fall back to alphabetical
+                            return wingA.localeCompare(wingB);
+                          })
+                          .map(([wing, stats]: [string, any]) => (
                             <tr key={wing}>
                               <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                                 {wing}
@@ -391,8 +446,7 @@ const BedOccupancyDashboard = ({
                                 </span>
                               </td>
                             </tr>
-                          )
-                        )}
+                          ))}
                       </tbody>
                     </table>
                   </div>

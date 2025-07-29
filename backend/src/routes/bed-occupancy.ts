@@ -31,7 +31,7 @@ app.get("/", authMiddleware, allowRole(["ADMIN"]), async (c) => {
       );
     }
 
-    // Get all rooms to calculate total bed capacity
+    // Get all rooms to calculate total bed capacity - only include rooms with actual beds
     const rooms = await prisma.room.findMany({
       select: {
         id: true,
@@ -41,7 +41,12 @@ app.get("/", authMiddleware, allowRole(["ADMIN"]), async (c) => {
       },
     });
 
-    const totalBeds = rooms.reduce((acc, room) => acc + room.capacity, 0);
+    // Filter out rooms with 0 capacity (bathrooms, toilets, stores, etc.)
+    const roomsWithBeds = rooms.filter((room) => room.capacity > 0);
+    const totalBeds = roomsWithBeds.reduce(
+      (acc, room) => acc + room.capacity,
+      0
+    );
     const totalPossibleBedDays =
       totalBeds *
       Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
@@ -199,7 +204,7 @@ app.get("/", authMiddleware, allowRole(["ADMIN"]), async (c) => {
         ? (totalOccupiedBedDays / totalPossibleBedDays) * 100
         : 0;
 
-    // Calculate wing-wise statistics
+    // Calculate wing-wise statistics - only include rooms with capacity > 0
     const wingStats: {
       [key: string]: {
         totalBeds: number;
@@ -209,7 +214,7 @@ app.get("/", authMiddleware, allowRole(["ADMIN"]), async (c) => {
       };
     } = {};
 
-    rooms.forEach((room) => {
+    roomsWithBeds.forEach((room) => {
       if (!wingStats[room.block]) {
         wingStats[room.block] = {
           totalBeds: 0,

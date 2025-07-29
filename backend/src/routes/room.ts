@@ -233,12 +233,54 @@ roomRoute.put("/assign", async (c) => {
   }
 });
 
-// ✅ Get all Rooms
+// ✅ Get all Rooms with pagination
 roomRoute.get("/", async (c) => {
-  const rooms = await prisma.room.findMany({
-    include: { students: true },
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = parseInt(c.req.query("limit") || "10");
+  const search = c.req.query("search") || "";
+
+  const skip = (page - 1) * limit;
+
+  // Build where clause for search
+  const whereClause = search
+    ? {
+        OR: [
+          { roomNumber: { contains: search, mode: "insensitive" as const } },
+          { block: { contains: search, mode: "insensitive" as const } },
+          { designation: { contains: search, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
+  const [rooms, total] = await Promise.all([
+    prisma.room.findMany({
+      where: whereClause,
+      include: {
+        students: true,
+        _count: {
+          select: { students: true },
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: [{ block: "asc" }, { roomNumber: "asc" }],
+    }),
+    prisma.room.count({ where: whereClause }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return c.json({
+    data: rooms,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
   });
-  return c.json(rooms);
 });
 
 // ✅ Get Room by ID

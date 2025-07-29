@@ -29,15 +29,19 @@ const getDisplayStatus = (room: Room) => {
   if (room.status === "RESERVED") return "RESERVED";
   if (room.students.length >= room.capacity) return "OCCUPIED";
   if (room.students.length > 0) return "PARTIALLY_OCCUPIED";
-  return "AVAILABLE";
+  return "VACANT";
 };
 
-const statusColor: Record<Room["status"], string> = {
-  AVAILABLE: "bg-blue-50 border-blue-500",
+const statusColor: Record<
+  Room["status"] | "VACANT" | "PARTIALLY_OCCUPIED",
+  string
+> = {
+  VACANT: "bg-blue-50 border-blue-500",
   OCCUPIED: "bg-red-100 border-red-500",
   PARTIALLY_OCCUPIED: "bg-yellow-100 border-yellow-500",
   RESERVED: "bg-blue-100 border-blue-500",
   BLOCKED: "bg-gray-200 border-gray-400 text-gray-400",
+  AVAILABLE: "bg-blue-50 border-blue-500", // Keep for backward compatibility
 };
 
 export default function RoomDiagram() {
@@ -48,8 +52,13 @@ export default function RoomDiagram() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/rooms`);
-        setRooms(res.data);
+        const res = await axios.get(`${API_BASE}/rooms?limit=1000`);
+        // Handle paginated response - extract the data array
+        const roomsData = res.data.data || res.data;
+        setRooms(Array.isArray(roomsData) ? roomsData : []);
+      } catch (error) {
+        console.error("Error fetching rooms:", error);
+        setRooms([]);
       } finally {
         setLoading(false);
       }
@@ -113,6 +122,8 @@ export default function RoomDiagram() {
                                 ? "OCCUPIED"
                                 : room.students.length > 0
                                 ? "PARTIALLY OCCUPIED"
+                                : room.status === "AVAILABLE"
+                                ? "VACANT"
                                 : room.status}
                             </span>
                           </div>

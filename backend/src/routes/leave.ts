@@ -41,17 +41,61 @@ leaveRoute.post("/", async (c) => {
   return c.json({ success: true, data: leave });
 });
 
-// GET /leaves - Admin views all leave applications
+// GET /leaves - Admin views all leave applications with pagination
 leaveRoute.get("/", async (c) => {
-  const leaves = await prisma.leave.findMany({
-    include: {
-      student: true,
-    },
-    orderBy: {
-      createdAt: "desc",
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = parseInt(c.req.query("limit") || "10");
+  const search = c.req.query("search") || "";
+  const status = c.req.query("status") || "";
+
+  const skip = (page - 1) * limit;
+
+  // Build where clause for search and filter
+  const whereClause: any = {};
+
+  if (search) {
+    whereClause.OR = [
+      { reason: { contains: search, mode: "insensitive" as const } },
+      { student: { name: { contains: search, mode: "insensitive" as const } } },
+      {
+        student: { email: { contains: search, mode: "insensitive" as const } },
+      },
+    ];
+  }
+
+  if (status && status !== "ALL") {
+    whereClause.status = status;
+  }
+
+  const [leaves, total] = await Promise.all([
+    prisma.leave.findMany({
+      where: whereClause,
+      include: {
+        student: true,
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.leave.count({ where: whereClause }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return c.json({
+    success: true,
+    data: leaves,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
     },
   });
-  return c.json({ success: true, data: leaves });
 });
 
 // GET /leaves/:id - View one leave

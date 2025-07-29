@@ -74,6 +74,7 @@ studentRoute.post(
       ticketNumber,
       division,
       course,
+      roomNumber,
       fromDate,
       toDate,
       bedsheetCount = 0,
@@ -161,6 +162,17 @@ studentRoute.post(
         );
       }
 
+      // Find room by roomNumber if provided
+      let roomId = null;
+      if (roomNumber) {
+        const room = await prisma.room.findUnique({
+          where: { roomNumber },
+        });
+        if (room) {
+          roomId = room.id;
+        }
+      }
+
       // Only send valid fields to Prisma
       const student = await prisma.student.create({
         data: {
@@ -174,6 +186,7 @@ studentRoute.post(
           ticketNumber,
           division,
           course,
+          roomId,
           fromDate,
           toDate,
           bedsheetCount,
@@ -188,10 +201,19 @@ studentRoute.post(
             },
           },
         },
-        include: { user: true },
+        include: {
+          user: true,
+          room: true,
+        },
       });
 
-      return c.json(student, 201);
+      // Transform to include flattened roomNumber
+      const transformedStudent = {
+        ...student,
+        roomNumber: student.room?.roomNumber || null,
+      };
+
+      return c.json(transformedStudent, 201);
     } catch (error: any) {
       console.error("Failed to create student and user:", error);
 
@@ -426,9 +448,15 @@ studentRoute.get("/", async (c) => {
     prisma.linenInventory.findFirst(),
   ]);
 
+  // Transform students data to flatten roomNumber
+  const transformedStudents = students.map((student) => ({
+    ...student,
+    roomNumber: student.room?.roomNumber || null,
+  }));
+
   return c.json({
     success: true,
-    data: students,
+    data: transformedStudents,
     meta: {
       page,
       totalPages: Math.ceil(total / limit),
@@ -503,6 +531,7 @@ studentRoute.get("/:id", async (c) => {
   // Return student with enhanced linen information
   return c.json({
     ...student,
+    roomNumber: student.room?.roomNumber || null,
     linenInfo: {
       bedsheetCount: student.bedsheetCount,
       pillowCount: student.pillowCount,
@@ -537,6 +566,15 @@ studentRoute.put("/:id", async (c) => {
   const body = await c.req.json();
 
   try {
+    // Handle roomNumber conversion to roomId
+    let roomId = body.roomId;
+    if (body.roomNumber) {
+      const room = await prisma.room.findUnique({
+        where: { roomNumber: body.roomNumber },
+      });
+      roomId = room?.id || null;
+    }
+
     // Validate body to ensure only valid Prisma fields are included
     // Extract only the fields that exist in the Prisma schema
     const validData = {
@@ -556,8 +594,7 @@ studentRoute.put("/:id", async (c) => {
       pillowCount: body.pillowCount,
       blanketCount: body.blanketCount,
       linenIssuedDate: body.linenIssuedDate,
-      roomId:
-        typeof body.roomId === "string" ? Number(body.roomId) : body.roomId,
+      roomId: typeof roomId === "string" ? Number(roomId) : roomId,
     };
 
     // Remove undefined fields to avoid Prisma validation errors
@@ -570,8 +607,19 @@ studentRoute.put("/:id", async (c) => {
     const updated = await prisma.student.update({
       where: { id },
       data: cleanData,
+      include: {
+        room: true,
+        user: true,
+      },
     });
-    return c.json(updated);
+
+    // Transform to include flattened roomNumber
+    const transformedStudent = {
+      ...updated,
+      roomNumber: updated.room?.roomNumber || null,
+    };
+
+    return c.json(transformedStudent);
   } catch (error) {
     console.error("Update student error:", error);
     return c.json(

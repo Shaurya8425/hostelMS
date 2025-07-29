@@ -43,6 +43,11 @@ import SkeletonRooms from "../../components/skeleton/admin/SkeletonRooms";
 
 export default function AdminRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [form, setForm] = useState({
     roomNumber: "",
     block: "",
@@ -59,13 +64,41 @@ export default function AdminRooms() {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
   const fetchRooms = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/rooms`, {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+        ...(debouncedSearch && { search: debouncedSearch }),
+      });
+
+      const res = await axios.get(`${API_BASE}/rooms?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setRooms(res.data);
+
+      if (res.data.data) {
+        setRooms(res.data.data);
+        setTotalPages(res.data.pagination.totalPages);
+        setTotal(res.data.pagination.total);
+      } else {
+        // Fallback for old API response format
+        setRooms(res.data);
+      }
     } catch (err) {
       toast.error("Failed to fetch rooms");
     } finally {
@@ -102,7 +135,7 @@ export default function AdminRooms() {
   useEffect(() => {
     fetchRooms();
     fetchStudents();
-  }, []);
+  }, [debouncedSearch, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -446,8 +479,22 @@ export default function AdminRooms() {
         </form>
       </div>
 
+      {/* Search Bar */}
+      <div className='mt-6 mb-4'>
+        <input
+          type='text'
+          placeholder='Search rooms by number, block, or designation...'
+          className='border px-4 py-2 rounded w-full sm:w-1/2 md:w-1/3 shadow-sm'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       {/* Room List */}
-      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4 mt-4'>
+      <div className='overflow-x-auto bg-white rounded-xl shadow border p-2 sm:p-4'>
+        <div className='mb-4 text-sm text-gray-600'>
+          Showing {rooms.length} of {total} rooms
+        </div>
         {/* Table for desktop */}
         <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
@@ -555,6 +602,27 @@ export default function AdminRooms() {
             <div className='p-4 text-center'>No rooms found</div>
           )}
         </div>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className='flex flex-col sm:flex-row justify-between items-center mt-6 gap-4'>
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
+        >
+          Previous
+        </button>
+        <p className='font-semibold'>
+          Page {page} of {totalPages}
+        </p>
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+          className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
+        >
+          Next
+        </button>
       </div>
     </div>
   );
