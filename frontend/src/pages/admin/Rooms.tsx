@@ -258,7 +258,7 @@ export default function AdminRooms() {
       </h1>
 
       <div className='flex flex-col lg:flex-row gap-4 justify-center items-stretch'>
-        {/* Create Room */}
+        {/* Create Room - Commented out 
         <form
           onSubmit={handleCreate}
           className='space-y-2 bg-white p-4 sm:p-6 rounded-xl border shadow mb-4 max-w-md w-full'
@@ -389,6 +389,7 @@ export default function AdminRooms() {
             Create Room
           </button>
         </form>
+        */}
 
         {/* Assign Student to Room */}
         <form
