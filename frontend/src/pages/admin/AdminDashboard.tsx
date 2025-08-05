@@ -481,7 +481,7 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-4xl mx-auto w-full'>
+        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-6xl mx-auto w-full'>
           <h2 className='text-xl font-bold mb-4 text-blue-800'>
             Linen Inventory Overview
           </h2>
@@ -768,7 +768,7 @@ function AdminDashboard() {
         </div>
 
         {/* Bed Days Occupancy Analysis */}
-        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-full mx-auto w-full'>
+        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-6xl mx-auto w-full'>
           <div className='flex justify-between items-center mb-4'>
             <h2 className='text-xl font-bold text-blue-800'>
               Bed Days Occupancy Analysis
@@ -783,7 +783,7 @@ function AdminDashboard() {
           <BedOccupancyDashboard summaryOnly={true} />
         </div>
 
-        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-4xl mx-auto w-full'>
+        <div className='bg-white rounded-2xl shadow-xl p-6 border max-w-6xl mx-auto w-full'>
           <h2 className='text-xl font-bold mb-4 text-blue-800'>
             Room Assignment Overview
           </h2>

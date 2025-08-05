@@ -27,6 +27,7 @@ export default function AdminLeaves() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const token = localStorage.getItem("token");
 
   // Debounce search input
@@ -44,7 +45,7 @@ export default function AdminLeaves() {
   }, [debouncedSearch, statusFilter]);
 
   const fetchLeaves = async () => {
-    setLoading(true);
+    // Don't set loading to true here anymore for better UX
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -68,6 +69,7 @@ export default function AdminLeaves() {
     } catch (err) {
       toast.error("Failed to fetch leave applications");
     } finally {
+      setTableLoading(false);
       setLoading(false);
     }
   };
@@ -112,11 +114,17 @@ export default function AdminLeaves() {
           placeholder='Search leaves by reason or student name...'
           className='border px-4 py-2 rounded flex-1 shadow-sm'
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setTableLoading(true);
+          }}
         />
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setTableLoading(true);
+          }}
           className='border px-4 py-2 rounded shadow-sm'
         >
           <option value='ALL'>All Status</option>
@@ -131,36 +139,38 @@ export default function AdminLeaves() {
           Showing {leaves.length} of {total} leave applications
         </div>
         {/* Table for desktop */}
-        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-left text-xs sm:text-sm hidden sm:table'>
+        <table className='min-w-[700px] w-full border-separate border-spacing-y-2 text-center text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border-b'>Student</th>
-              <th className='p-2 border-b'>Email</th>
-              <th className='p-2 border-b'>From</th>
-              <th className='p-2 border-b'>To</th>
-              <th className='p-2 border-b'>Reason</th>
-              <th className='p-2 border-b'>Status</th>
-              <th className='p-2 border-b'>Actions</th>
+              <th className='p-2 border-b text-center'>Student</th>
+              <th className='p-2 border-b text-center'>Email</th>
+              <th className='p-2 border-b text-center'>From</th>
+              <th className='p-2 border-b text-center'>To</th>
+              <th className='p-2 border-b text-center'>Reason</th>
+              <th className='p-2 border-b text-center'>Status</th>
+              <th className='p-2 border-b text-center'>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {leaves.map((leave) => (
+            {(tableLoading ? [] : leaves).map((leave) => (
               <tr
                 key={leave.id}
                 className='hover:bg-blue-50 rounded-lg transition'
               >
-                <td className='p-2'>
+                <td className='p-2 text-center'>
                   <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
                     {leave.student.name}
                   </span>
                 </td>
-                <td className='p-2'>{leave.student.email}</td>
-                <td className='p-2'>
+                <td className='p-2 text-center'>{leave.student.email}</td>
+                <td className='p-2 text-center'>
                   {new Date(leave.fromDate).toDateString()}
                 </td>
-                <td className='p-2'>{new Date(leave.toDate).toDateString()}</td>
-                <td className='p-2'>{leave.reason}</td>
-                <td className='p-2'>
+                <td className='p-2 text-center'>
+                  {new Date(leave.toDate).toDateString()}
+                </td>
+                <td className='p-2 text-center'>{leave.reason}</td>
+                <td className='p-2 text-center'>
                   <span
                     className={
                       leave.status === "PENDING"
@@ -173,9 +183,9 @@ export default function AdminLeaves() {
                     {leave.status}
                   </span>
                 </td>
-                <td className='p-2 space-x-2'>
+                <td className='p-2 space-x-2 text-center'>
                   {leave.status === "PENDING" ? (
-                    <>
+                    <div className='flex justify-center space-x-2'>
                       <button
                         onClick={() => handleStatusUpdate(leave.id, "APPROVED")}
                         className='bg-gradient-to-r from-green-500 to-green-700 text-white px-2 py-1 rounded shadow hover:from-green-600 hover:to-green-800 text-sm transition'
@@ -188,7 +198,7 @@ export default function AdminLeaves() {
                       >
                         Reject
                       </button>
-                    </>
+                    </div>
                   ) : (
                     <span className='text-gray-500 text-sm'>
                       {leave.status === "APPROVED"
@@ -199,7 +209,17 @@ export default function AdminLeaves() {
                 </td>
               </tr>
             ))}
-            {leaves.length === 0 && (
+            {tableLoading && (
+              <tr>
+                <td colSpan={7} className='p-8 text-center'>
+                  <div className='flex items-center justify-center space-x-2'>
+                    <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                    <span className='text-gray-600'>Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!tableLoading && leaves.length === 0 && (
               <tr>
                 <td className='p-4 text-center' colSpan={7}>
                   No leave applications found.
@@ -210,7 +230,7 @@ export default function AdminLeaves() {
         </table>
         {/* Card layout for mobile */}
         <div className='sm:hidden flex flex-col gap-4'>
-          {leaves.map((leave) => (
+          {(tableLoading ? [] : leaves).map((leave) => (
             <div
               key={leave.id}
               className='bg-blue-50 rounded-lg shadow p-3 text-xs'
@@ -267,8 +287,18 @@ export default function AdminLeaves() {
               )}
             </div>
           ))}
-          {leaves.length === 0 && (
-            <div className='p-4 text-center'>No leave applications found.</div>
+          {tableLoading && (
+            <div className='p-8 text-center'>
+              <div className='flex items-center justify-center space-x-2'>
+                <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                <span className='text-gray-600'>Loading...</span>
+              </div>
+            </div>
+          )}
+          {!tableLoading && leaves.length === 0 && (
+            <div className='p-4 text-center text-gray-500'>
+              No leave applications found.
+            </div>
           )}
         </div>
       </div>

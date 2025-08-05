@@ -7,12 +7,12 @@ export default function SkeletonRooms() {
       {/* Forms Section */}
       <div className='flex flex-col lg:flex-row gap-4 justify-center items-stretch mb-4'>
         {/* Create Room Form */}
-        <div className='bg-white p-4 sm:p-6 rounded-xl border shadow max-w-md w-full'>
+        {/* <div className='bg-white p-4 sm:p-6 rounded-xl border shadow max-w-md w-full'>
           <div className='h-6 w-32 bg-gray-200 rounded mb-4'></div>
           {[...Array(7)].map((_, i) => (
             <div key={i} className='h-10 bg-gray-100 rounded mb-2'></div>
           ))}
-        </div>
+        </div> */}
 
         {/* Assign Student Form */}
         <div className='bg-white p-4 sm:p-6 rounded-xl border shadow max-w-md w-full'>

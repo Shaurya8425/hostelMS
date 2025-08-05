@@ -49,6 +49,7 @@ export default function AdminRooms() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [tableLoading, setTableLoading] = useState(false); // Added table loading state
   /* const [form, setForm] = useState({
     roomNumber: "",
     block: "",
@@ -65,7 +66,7 @@ export default function AdminRooms() {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
-  // Debounce search input
+  // Debounce search input with optimized implementation
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -80,7 +81,6 @@ export default function AdminRooms() {
   }, [debouncedSearch]);
 
   const fetchRooms = async () => {
-    setLoading(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -103,6 +103,7 @@ export default function AdminRooms() {
     } catch (err) {
       toast.error("Failed to fetch rooms");
     } finally {
+      setTableLoading(false);
       setLoading(false);
     }
   };
@@ -152,10 +153,15 @@ export default function AdminRooms() {
     }
   };
 
+  // Fetch initial data only once
   useEffect(() => {
-    fetchRooms();
     fetchAllRooms(); // Fetch all rooms for the dropdown
     fetchStudents();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch rooms when search or page changes (including initial load)
+  useEffect(() => {
+    fetchRooms();
   }, [debouncedSearch, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* const handleCreate = async (e: React.FormEvent) => {
@@ -509,7 +515,10 @@ export default function AdminRooms() {
           placeholder='Search rooms by number, block, or designation...'
           className='border px-4 py-2 rounded w-full sm:w-1/2 md:w-1/3 shadow-sm'
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setTableLoading(true);
+          }}
         />
       </div>
 
@@ -519,31 +528,31 @@ export default function AdminRooms() {
           Showing {rooms.length} of {total} rooms
         </div>
         {/* Table for desktop */}
-        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
+        <table className='min-w-[700px] w-full text-center border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border-b'>Room Number</th>
-              <th className='p-2 border-b'>Block</th>
-              <th className='p-2 border-b'>Floor</th>
-              <th className='p-2 border-b'>Designation</th>
-              <th className='p-2 border-b'>Capacity</th>
-              <th className='p-2 border-b'>Status</th>
-              <th className='p-2 border-b'>Occupied</th>
-              <th className='p-2 border-b'>Students</th>
+              <th className='p-2 border-b text-center'>Room Number</th>
+              <th className='p-2 border-b text-center'>Block</th>
+              <th className='p-2 border-b text-center'>Floor</th>
+              <th className='p-2 border-b text-center'>Designation</th>
+              <th className='p-2 border-b text-center'>Capacity</th>
+              <th className='p-2 border-b text-center'>Status</th>
+              <th className='p-2 border-b text-center'>Occupied</th>
+              <th className='p-2 border-b text-center'>Students</th>
             </tr>
           </thead>
           <tbody>
-            {rooms.map((room) => (
+            {(tableLoading ? [] : rooms).map((room) => (
               <tr
                 key={room.id}
                 className='hover:bg-blue-50 rounded-lg transition'
               >
-                <td className='p-2'>{room.roomNumber}</td>
-                <td className='p-2'>{room.block}</td>
-                <td className='p-2'>{room.floor}</td>
-                <td className='p-2'>{room.designation || "-"}</td>
-                <td className='p-2'>{room.capacity}</td>
-                <td className='p-2'>
+                <td className='p-2 text-center'>{room.roomNumber}</td>
+                <td className='p-2 text-center'>{room.block}</td>
+                <td className='p-2 text-center'>{room.floor}</td>
+                <td className='p-2 text-center'>{room.designation || "-"}</td>
+                <td className='p-2 text-center'>{room.capacity}</td>
+                <td className='p-2 text-center'>
                   <span
                     className={
                       room.status === "AVAILABLE"
@@ -558,10 +567,10 @@ export default function AdminRooms() {
                     {room.status}
                   </span>
                 </td>
-                <td className='p-2'>{room.students.length}</td>
-                <td className='p-2'>
+                <td className='p-2 text-center'>{room.students.length}</td>
+                <td className='p-2 text-center'>
                   {room.students.length > 0 ? (
-                    <div className='flex flex-wrap gap-2'>
+                    <div className='flex flex-wrap gap-2 justify-center'>
                       {room.students.map((s) => (
                         <span
                           key={s.id}
@@ -577,18 +586,22 @@ export default function AdminRooms() {
                 </td>
               </tr>
             ))}
-            {rooms.length === 0 && (
+            {tableLoading && (
               <tr>
-                <td className='p-4 text-center' colSpan={8}>
-                  No rooms found
+                <td colSpan={8} className='p-8 text-center'>
+                  <div className='flex items-center justify-center space-x-2'>
+                    <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                    <span className='text-gray-600'>Loading...</span>
+                  </div>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        {/* Card layout for mobile */}
-        <div className='sm:hidden flex flex-col gap-4'>
-          {rooms.map((room) => (
+
+        {/* Mobile cards */}
+        <div className='sm:hidden space-y-4'>
+          {(tableLoading ? [] : rooms).map((room) => (
             <div
               key={room.id}
               className='bg-blue-50 rounded-lg shadow p-3 text-xs'
@@ -621,8 +634,16 @@ export default function AdminRooms() {
               </div>
             </div>
           ))}
-          {rooms.length === 0 && (
-            <div className='p-4 text-center'>No rooms found</div>
+          {tableLoading && (
+            <div className='p-8 text-center'>
+              <div className='flex items-center justify-center space-x-2'>
+                <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                <span className='text-gray-600'>Loading...</span>
+              </div>
+            </div>
+          )}
+          {!tableLoading && rooms.length === 0 && (
+            <div className='p-4 text-center text-gray-500'>No rooms found</div>
           )}
         </div>
       </div>

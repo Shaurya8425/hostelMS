@@ -26,6 +26,7 @@ export default function AdminComplaints() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const token = localStorage.getItem("token");
 
   // Debounce search input
@@ -43,7 +44,7 @@ export default function AdminComplaints() {
   }, [debouncedSearch, statusFilter]);
 
   const fetchComplaints = async () => {
-    setLoading(true);
+    // Don't set loading to true here anymore for better UX
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -67,6 +68,7 @@ export default function AdminComplaints() {
     } catch (err) {
       toast.error("Failed to fetch complaints");
     } finally {
+      setTableLoading(false);
       setLoading(false);
     }
   };
@@ -107,11 +109,17 @@ export default function AdminComplaints() {
           placeholder='Search complaints by subject, description, or student...'
           className='border px-4 py-2 rounded flex-1 shadow-sm'
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setTableLoading(true);
+          }}
         />
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setTableLoading(true);
+          }}
           className='border px-4 py-2 rounded shadow-sm'
         >
           <option value='ALL'>All Status</option>
@@ -126,22 +134,22 @@ export default function AdminComplaints() {
           Showing {complaints.length} of {total} complaints
         </div>
         {/* Table for desktop */}
-        <table className='min-w-[700px] w-full text-left border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
+        <table className='min-w-[700px] w-full text-center border-separate border-spacing-y-2 text-xs sm:text-sm hidden sm:table'>
           <thead className='bg-blue-50'>
             <tr>
-              <th className='p-2 border-b'>Subject</th>
-              <th className='p-2 border-b'>Description</th>
-              <th className='p-2 border-b'>Student</th>
-              <th className='p-2 border-b'>Status</th>
-              <th className='p-2 border-b'>Actions</th>
+              <th className='p-2 border-b text-center'>Subject</th>
+              <th className='p-2 border-b text-center'>Description</th>
+              <th className='p-2 border-b text-center'>Student</th>
+              <th className='p-2 border-b text-center'>Status</th>
+              <th className='p-2 border-b text-center'>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {complaints.map((c) => (
+            {(tableLoading ? [] : complaints).map((c) => (
               <tr key={c.id} className='hover:bg-blue-50 rounded-lg transition'>
-                <td className='p-2'>{c.subject}</td>
-                <td className='p-2'>{c.description}</td>
-                <td className='p-2'>
+                <td className='p-2 text-center'>{c.subject}</td>
+                <td className='p-2 text-center'>{c.description}</td>
+                <td className='p-2 text-center'>
                   <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium shadow-sm'>
                     {c.student.name}
                   </span>
@@ -149,7 +157,7 @@ export default function AdminComplaints() {
                     {c.student.email}
                   </div>
                 </td>
-                <td className='p-2'>
+                <td className='p-2 text-center'>
                   <span
                     className={
                       c.status === "PENDING"
@@ -162,7 +170,7 @@ export default function AdminComplaints() {
                     {c.status}
                   </span>
                 </td>
-                <td className='p-2 space-x-2'>
+                <td className='p-2 space-x-2 text-center'>
                   <select
                     className='border p-1 rounded shadow-sm bg-white'
                     value={c.status}
@@ -180,7 +188,17 @@ export default function AdminComplaints() {
                 </td>
               </tr>
             ))}
-            {complaints.length === 0 && (
+            {tableLoading && (
+              <tr>
+                <td colSpan={5} className='p-8 text-center'>
+                  <div className='flex items-center justify-center space-x-2'>
+                    <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                    <span className='text-gray-600'>Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!tableLoading && complaints.length === 0 && (
               <tr>
                 <td className='p-4 text-center' colSpan={5}>
                   No complaints found
@@ -191,7 +209,7 @@ export default function AdminComplaints() {
         </table>
         {/* Card layout for mobile */}
         <div className='sm:hidden flex flex-col gap-4'>
-          {complaints.map((c) => (
+          {(tableLoading ? [] : complaints).map((c) => (
             <div
               key={c.id}
               className='bg-blue-50 rounded-lg shadow p-3 text-xs'
@@ -240,8 +258,18 @@ export default function AdminComplaints() {
               </div>
             </div>
           ))}
-          {complaints.length === 0 && (
-            <div className='p-4 text-center'>No complaints found</div>
+          {tableLoading && (
+            <div className='p-8 text-center'>
+              <div className='flex items-center justify-center space-x-2'>
+                <div className='w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin'></div>
+                <span className='text-gray-600'>Loading...</span>
+              </div>
+            </div>
+          )}
+          {!tableLoading && complaints.length === 0 && (
+            <div className='p-4 text-center text-gray-500'>
+              No complaints found
+            </div>
           )}
         </div>
       </div>

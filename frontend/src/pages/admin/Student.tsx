@@ -55,6 +55,7 @@ export default function AdminStudents() {
   const [totalPages, setTotalPages] = useState(1);
   const [archivedTotalPages, setArchivedTotalPages] = useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
   interface StudentForm {
     name: string;
     email: string;
@@ -128,7 +129,8 @@ export default function AdminStudents() {
   };
 
   const fetchStudents = async () => {
-    setLoading(true);
+    // Note: We don't set tableLoading to true here anymore
+    // The loading state is now set when typing in the search box
     try {
       console.log(
         "Fetching students with token:",
@@ -139,6 +141,7 @@ export default function AdminStudents() {
         toast.error(
           "Authentication token missing or invalid. Please log in again."
         );
+        setTableLoading(false);
         return;
       }
 
@@ -146,9 +149,7 @@ export default function AdminStudents() {
         `/students?search=${debouncedSearch}&page=${page}&limit=20`
       );
 
-      console.log("Full API response:", res);
       console.log("Student data from API:", res.data);
-      console.log("Meta data:", res.data.meta);
       console.log("Total pages from API:", res.data.meta?.totalPages);
       console.log("Current page:", page);
       console.log("Search query:", search);
@@ -167,17 +168,20 @@ export default function AdminStudents() {
           (err.response?.data?.error || err.message)
       );
     } finally {
-      setLoading(false);
+      setTableLoading(false); // Reset table loading state after request completes
+      setLoading(false); // Also reset the main loading state if it's the initial load
     }
   };
 
   const fetchArchivedStudents = async () => {
-    setLoading(true);
+    // Note: We don't set tableLoading to true here anymore
+    // The loading state is now set when typing in the search box
     try {
       if (!token || !isValidToken(token)) {
         toast.error(
           "Authentication token missing or invalid. Please log in again."
         );
+        setTableLoading(false);
         return;
       }
 
@@ -195,7 +199,8 @@ export default function AdminStudents() {
           (err.response?.data?.error || err.message)
       );
     } finally {
-      setLoading(false);
+      setTableLoading(false); // Reset table loading state after request completes
+      setLoading(false); // Also reset the main loading state if it's the initial load
     }
   };
 
@@ -227,22 +232,28 @@ export default function AdminStudents() {
     }
   }, [token]);
 
-  // Debounce search inputs
+  // Debounce search inputs with more efficient implementation
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(timer);
-  }, [search]);
+    // Only update if we're on the current tab to prevent unnecessary API calls
+    if (activeTab === "current") {
+      const timer = setTimeout(() => {
+        setDebouncedSearch(search);
+        // Don't turn off loading state here - it will be turned off after API call completes
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [search, activeTab]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedArchivedSearch(archivedSearch);
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(timer);
-  }, [archivedSearch]);
+    // Only update if we're on the archived tab to prevent unnecessary API calls
+    if (activeTab === "archived") {
+      const timer = setTimeout(() => {
+        setDebouncedArchivedSearch(archivedSearch);
+        // Don't turn off loading state here - it will be turned off after API call completes
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [archivedSearch, activeTab]);
 
   // Reset page when search changes
   useEffect(() => {
@@ -253,14 +264,20 @@ export default function AdminStudents() {
     setArchivedPage(1);
   }, [debouncedArchivedSearch]);
 
+  // Separate useEffects for better control and fewer re-renders
   useEffect(() => {
     if (activeTab === "current") {
       fetchStudents();
-    } else {
+    }
+    // eslint-disable-next-line
+  }, [debouncedSearch, page, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "archived") {
       fetchArchivedStudents();
     }
     // eslint-disable-next-line
-  }, [debouncedSearch, page, debouncedArchivedSearch, archivedPage, activeTab]);
+  }, [debouncedArchivedSearch, archivedPage, activeTab]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -655,7 +672,9 @@ export default function AdminStudents() {
     setDeleteId(null);
   };
 
-  if (loading) return <SkeletonStudents />;
+  // Only show the full skeleton on initial load
+  if (loading && !students.length && !archivedStudents.length)
+    return <SkeletonStudents />;
 
   return (
     <div className='p-2 sm:p-4'>
@@ -678,7 +697,12 @@ export default function AdminStudents() {
         <div className='border-b border-gray-200'>
           <nav className='-mb-px flex space-x-8'>
             <button
-              onClick={() => setActiveTab("current")}
+              onClick={() => {
+                if (activeTab !== "current") {
+                  setTableLoading(true);
+                  setActiveTab("current");
+                }
+              }}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "current"
                   ? "border-blue-500 text-blue-600"
@@ -688,7 +712,12 @@ export default function AdminStudents() {
               Current Students
             </button>
             <button
-              onClick={() => setActiveTab("archived")}
+              onClick={() => {
+                if (activeTab !== "archived") {
+                  setTableLoading(true);
+                  setActiveTab("archived");
+                }
+              }}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === "archived"
                   ? "border-blue-500 text-blue-600"
@@ -995,27 +1024,35 @@ export default function AdminStudents() {
         </form>
       )}
 
-      <input
-        type='text'
-        placeholder={
-          activeTab === "current"
-            ? "Search current students by name or email"
-            : "Search archived students by name or email"
-        }
-        className='border px-4 py-2 rounded w-full sm:w-1/2 md:w-1/3 mb-6 shadow-sm'
-        value={activeTab === "current" ? search : archivedSearch}
-        onChange={(e) =>
-          activeTab === "current"
-            ? setSearch(e.target.value)
-            : setArchivedSearch(e.target.value)
-        }
-      />
+      <div className='relative'>
+        <input
+          type='text'
+          placeholder={
+            activeTab === "current"
+              ? "Search current students by name or email"
+              : "Search archived students by name or email"
+          }
+          className='border px-4 py-2 rounded w-full sm:w-1/2 md:w-1/3 mb-6 shadow-sm'
+          value={activeTab === "current" ? search : archivedSearch}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            // Set table loading state immediately when typing
+            setTableLoading(true);
+            // Update the input value immediately to show user feedback
+            if (activeTab === "current") {
+              setSearch(newValue);
+            } else {
+              setArchivedSearch(newValue);
+            }
+          }}
+        />
+      </div>
 
       <div className='w-full overflow-x-auto bg-white rounded-xl shadow border p-1 sm:p-4'>
         {activeTab === "current" ? (
           <>
             {/* Current Students Table for desktop and tablets */}
-            <table className='min-w-[900px] w-full border-separate border-spacing-y-2 text-left text-xs md:text-sm hidden md:table'>
+            <table className='min-w-[900px] w-full border-separate border-spacing-y-2 text-center text-xs md:text-sm hidden md:table'>
               <thead className='bg-blue-50'>
                 <tr>
                   <th className='p-2 border-b'>Name</th>
@@ -1034,144 +1071,457 @@ export default function AdminStudents() {
                 </tr>
               </thead>
               <tbody>
-                {students.map((s) => (
-                  <tr
-                    key={s.id}
-                    className='hover:bg-blue-50 rounded-lg transition'
-                  >
-                    {editId === s.id ? (
-                      <>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='name'
-                            value={editForm.name}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border w-48 min-w-[10rem] max-w-[16rem]'>
-                          <input
-                            type='email'
-                            name='email'
-                            value={editForm.email}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='designation'
-                            value={editForm.designation}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='guardianName'
-                            value={editForm.guardianName}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='mobile'
-                            value={editForm.mobile}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='ticketNumber'
-                            value={editForm.ticketNumber}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='division'
-                            value={editForm.division}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='course'
-                            value={editForm.course}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <input
-                            type='text'
-                            name='roomNumber'
-                            value={editForm.roomNumber || ""}
-                            onChange={handleEditFormChange}
-                            className='p-1 border rounded w-full min-w-0 max-w-xs'
-                          />
-                        </td>
-                        <td className='p-2 border min-w-0'>
-                          <div className='space-y-2'>
-                            <div>
-                              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                                Bedsheets
-                              </label>
+                {tableLoading ? (
+                  <tr>
+                    <td colSpan={11} className='p-8 text-center'>
+                      <div className='flex items-center justify-center space-x-2'>
+                        <div className='animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent'></div>
+                        <span className='text-gray-600'>
+                          Loading student data...
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {students.map((s) => (
+                      <tr
+                        key={s.id}
+                        className='hover:bg-blue-50 rounded-lg transition'
+                      >
+                        {editId === s.id ? (
+                          <>
+                            <td className='p-2 border min-w-0 text-center'>
                               <input
-                                type='number'
-                                name='bedsheetCount'
-                                min='0'
-                                max='5'
-                                value={editForm.bedsheetCount}
+                                type='text'
+                                name='name'
+                                value={editForm.name}
                                 onChange={handleEditFormChange}
-                                className='w-24 p-1 border rounded'
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
                               />
-                            </div>
-                            <div>
-                              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                                Pillows
-                              </label>
+                            </td>
+                            <td className='p-2 border w-48 min-w-[10rem] max-w-[16rem] text-center'>
                               <input
-                                type='number'
-                                name='pillowCount'
-                                min='0'
-                                max='5'
-                                value={editForm.pillowCount}
+                                type='email'
+                                name='email'
+                                value={editForm.email}
                                 onChange={handleEditFormChange}
-                                className='w-24 p-1 border rounded'
+                                className='p-1 border rounded w-full max-w-xs mx-auto'
                               />
-                            </div>
-                            <div>
-                              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                                Blankets
-                              </label>
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
                               <input
-                                type='number'
-                                name='blanketCount'
-                                min='0'
-                                max='5'
-                                value={editForm.blanketCount}
+                                type='text'
+                                name='designation'
+                                value={editForm.designation}
                                 onChange={handleEditFormChange}
-                                className='w-24 p-1 border rounded'
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
                               />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <input
+                                type='text'
+                                name='guardianName'
+                                value={editForm.guardianName}
+                                onChange={handleEditFormChange}
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
+                              />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <input
+                                type='text'
+                                name='mobile'
+                                value={editForm.mobile}
+                                onChange={handleEditFormChange}
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
+                              />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <input
+                                type='text'
+                                name='ticketNumber'
+                                value={editForm.ticketNumber}
+                                onChange={handleEditFormChange}
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
+                              />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <input
+                                type='text'
+                                name='division'
+                                value={editForm.division}
+                                onChange={handleEditFormChange}
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
+                              />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <input
+                                type='text'
+                                name='course'
+                                value={editForm.course}
+                                onChange={handleEditFormChange}
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
+                              />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <input
+                                type='text'
+                                name='roomNumber'
+                                value={editForm.roomNumber || ""}
+                                onChange={handleEditFormChange}
+                                className='p-1 border rounded w-full min-w-0 max-w-xs mx-auto'
+                              />
+                            </td>
+                            <td className='p-2 border min-w-0 text-center'>
+                              <div className='space-y-2 flex flex-col items-center'>
+                                <div className='flex flex-col items-center'>
+                                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                    Bedsheets
+                                  </label>
+                                  <input
+                                    type='number'
+                                    name='bedsheetCount'
+                                    min='0'
+                                    max='5'
+                                    value={editForm.bedsheetCount}
+                                    onChange={handleEditFormChange}
+                                    className='w-24 p-1 border rounded mx-auto'
+                                  />
+                                </div>
+                                <div className='flex flex-col items-center'>
+                                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                    Pillows
+                                  </label>
+                                  <input
+                                    type='number'
+                                    name='pillowCount'
+                                    min='0'
+                                    max='5'
+                                    value={editForm.pillowCount}
+                                    onChange={handleEditFormChange}
+                                    className='w-24 p-1 border rounded mx-auto'
+                                  />
+                                </div>
+                                <div className='flex flex-col items-center'>
+                                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                    Blankets
+                                  </label>
+                                  <input
+                                    type='number'
+                                    name='blanketCount'
+                                    min='0'
+                                    max='5'
+                                    value={editForm.blanketCount}
+                                    onChange={handleEditFormChange}
+                                    className='w-24 p-1 border rounded mx-auto'
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className='p-2 border space-x-2 min-w-0 text-center'>
+                              <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                                <button
+                                  className='text-green-600 border border-green-600 px-3 py-1 rounded hover:bg-green-50'
+                                  onClick={() => handleEditSave(s.id)}
+                                  type='button'
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  className='text-gray-600 border border-gray-400 px-3 py-1 rounded hover:bg-gray-50'
+                                  onClick={handleEditCancel}
+                                  type='button'
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className='p-2 text-center'>{s.name}</td>
+                            <td
+                              className='p-2 w-48 min-w-[10rem] max-w-[16rem] truncate text-center'
+                              title={s.email}
+                            >
+                              {s.email}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.designation || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.guardianName || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.mobile || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.ticketNumber || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.division || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.course || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              {s.roomNumber || "-"}
+                            </td>
+                            <td className='p-2 text-center'>
+                              <div className='space-y-1 flex flex-col items-center justify-center'>
+                                <div className='flex items-center gap-2'>
+                                  <span className='text-sm text-gray-600'>
+                                    <img className='w-4' src={bed} alt='' />
+                                  </span>
+                                  <span className='font-medium'>
+                                    Bedsheets:
+                                  </span>
+                                  <div className='flex flex-col items-center'>
+                                    <span className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs'>
+                                      {s.bedsheetCount} issued
+                                    </span>
+                                    <span className='text-xs text-gray-500 mt-1'>
+                                      {s.linenIssuedDate
+                                        ? `Last updated: ${new Date(
+                                            s.linenIssuedDate
+                                          ).toLocaleDateString()}`
+                                        : "None issued"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                  <span className='text-sm text-gray-600'>
+                                    <img className='w-4' src={pillow} alt='' />
+                                  </span>
+                                  <span className='font-medium'>Pillows:</span>
+                                  <div className='flex flex-col items-center'>
+                                    <span className='bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs'>
+                                      {s.pillowCount} issued
+                                    </span>
+                                    <span className='text-xs text-gray-500 mt-1'>
+                                      {s.linenIssuedDate
+                                        ? `Last updated: ${new Date(
+                                            s.linenIssuedDate
+                                          ).toLocaleDateString()}`
+                                        : "None issued"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                  <span className='text-sm text-gray-600'>
+                                    <img className='w-4' src={blankie} alt='' />
+                                  </span>
+                                  <span className='font-medium'>Blankets:</span>
+                                  <div className='flex flex-col items-center'>
+                                    <span className='bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs'>
+                                      {s.blanketCount} issued
+                                    </span>
+                                    <span className='text-xs text-gray-500 mt-1'>
+                                      {s.linenIssuedDate
+                                        ? `Last updated: ${new Date(
+                                            s.linenIssuedDate
+                                          ).toLocaleDateString()}`
+                                        : "None issued"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className='p-2 space-x-2 text-center'>
+                              <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                                <button
+                                  className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold sm:mr-2'
+                                  onClick={() => handleEditClick(s)}
+                                  type='button'
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
+                                  onClick={() => handleDeleteClick(s.id)}
+                                  type='button'
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                    {students.length === 0 && (
+                      <tr>
+                        <td className='p-4 text-center' colSpan={11}>
+                          <p className='text-gray-500 font-medium'>
+                            No students found
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )}
+              </tbody>
+            </table>
+            {/* Card layout for mobile and small screens */}
+            <div className='md:hidden flex flex-col gap-4'>
+              {tableLoading ? (
+                <div className='p-8 text-center'>
+                  <div className='flex items-center justify-center space-x-2'>
+                    <div className='animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent'></div>
+                    <span className='text-gray-600'>
+                      Loading student data...
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {students.map((s) => (
+                    <div
+                      key={s.id}
+                      className='bg-blue-50 rounded-lg shadow p-3 text-xs'
+                    >
+                      {editId === s.id ? (
+                        <>
+                          <div className='flex justify-between mb-1'>
+                            <input
+                              type='text'
+                              name='name'
+                              value={editForm.name}
+                              onChange={handleEditFormChange}
+                              className='font-bold p-1 border rounded w-full'
+                            />
+                          </div>
+                          <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                            <span className='font-semibold'>Email:</span>
+                            <input
+                              type='email'
+                              name='email'
+                              value={editForm.email}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>Designation:</span>
+                            <input
+                              type='text'
+                              name='designation'
+                              value={editForm.designation}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>
+                              Guardian Name:
+                            </span>
+                            <input
+                              type='text'
+                              name='guardianName'
+                              value={editForm.guardianName}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>Mobile:</span>
+                            <input
+                              type='text'
+                              name='mobile'
+                              value={editForm.mobile}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>
+                              Ticket Number:
+                            </span>
+                            <input
+                              type='text'
+                              name='ticketNumber'
+                              value={editForm.ticketNumber}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>Division:</span>
+                            <input
+                              type='text'
+                              name='division'
+                              value={editForm.division}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>Course:</span>
+                            <input
+                              type='text'
+                              name='course'
+                              value={editForm.course}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>Room No.:</span>
+                            <input
+                              type='text'
+                              name='roomNumber'
+                              value={editForm.roomNumber}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            />
+                            <span className='font-semibold'>Gender:</span>
+                            <select
+                              name='gender'
+                              value={editForm.gender}
+                              onChange={handleEditFormChange}
+                              className='p-1 border rounded w-full'
+                            >
+                              <option value='MALE'>Male</option>
+                              <option value='FEMALE'>Female</option>
+                              <option value='OTHER'>Other</option>
+                            </select>
+                            <span className='font-semibold'>
+                              Linen Inventory:
+                            </span>
+                            <div className='space-y-2'>
+                              <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                  Bedsheets
+                                </label>
+                                <input
+                                  type='number'
+                                  name='bedsheetCount'
+                                  min='0'
+                                  max='5'
+                                  value={editForm.bedsheetCount}
+                                  onChange={handleEditFormChange}
+                                  className='p-1 border rounded w-full'
+                                />
+                              </div>
+                              <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                  Pillows
+                                </label>
+                                <input
+                                  type='number'
+                                  name='pillowCount'
+                                  min='0'
+                                  max='5'
+                                  value={editForm.pillowCount}
+                                  onChange={handleEditFormChange}
+                                  className='p-1 border rounded w-full'
+                                />
+                              </div>
+                              <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                  Blankets
+                                </label>
+                                <input
+                                  type='number'
+                                  name='blanketCount'
+                                  min='0'
+                                  max='2'
+                                  value={editForm.blanketCount}
+                                  onChange={handleEditFormChange}
+                                  className='p-1 border rounded w-full'
+                                />
+                              </div>
                             </div>
                           </div>
-                        </td>
-                        <td className='p-2 border space-x-2 min-w-0'>
-                          <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                          <div className='flex gap-2 mt-2'>
                             <button
-                              className='text-green-600 border border-green-600 px-2 py-1 rounded'
+                              className='text-green-600 mr-2 border border-green-600 px-2 py-1 rounded'
                               onClick={() => handleEditSave(s.id)}
                               type='button'
                             >
@@ -1185,86 +1535,44 @@ export default function AdminStudents() {
                               Cancel
                             </button>
                           </div>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className='p-2'>{s.name}</td>
-                        <td
-                          className='p-2 w-48 min-w-[10rem] max-w-[16rem] truncate'
-                          title={s.email}
-                        >
-                          {s.email}
-                        </td>
-                        <td className='p-2'>{s.designation || "-"}</td>
-                        <td className='p-2'>{s.guardianName || "-"}</td>
-                        <td className='p-2'>{s.mobile || "-"}</td>
-                        <td className='p-2'>{s.ticketNumber || "-"}</td>
-                        <td className='p-2'>{s.division || "-"}</td>
-                        <td className='p-2'>{s.course || "-"}</td>
-                        <td className='p-2'>{s.roomNumber || "-"}</td>
-                        <td className='p-2'>
-                          <div className='space-y-1'>
-                            <div className='flex items-center gap-2'>
-                              <span className='text-sm text-gray-600'>
-                                <img className='w-4' src={bed} alt='' />
-                              </span>
-                              <span className='font-medium'>Bedsheets:</span>
-                              <div className='flex flex-col'>
-                                <span className='bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs'>
-                                  {s.bedsheetCount} issued
-                                </span>
-                                <span className='text-xs text-gray-500 mt-1'>
-                                  {s.linenIssuedDate
-                                    ? `Last updated: ${new Date(
-                                        s.linenIssuedDate
-                                      ).toLocaleDateString()}`
-                                    : "None issued"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className='flex items-center gap-2'>
-                              <span className='text-sm text-gray-600'>
-                                <img className='w-4' src={pillow} alt='' />
-                              </span>
-                              <span className='font-medium'>Pillows:</span>
-                              <div className='flex flex-col'>
-                                <span className='bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs'>
-                                  {s.pillowCount} issued
-                                </span>
-                                <span className='text-xs text-gray-500 mt-1'>
-                                  {s.linenIssuedDate
-                                    ? `Last updated: ${new Date(
-                                        s.linenIssuedDate
-                                      ).toLocaleDateString()}`
-                                    : "None issued"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className='flex items-center gap-2'>
-                              <span className='text-sm text-gray-600'>
-                                <img className='w-4' src={blankie} alt='' />
-                              </span>
-                              <span className='font-medium'>Blankets:</span>
-                              <div className='flex flex-col'>
-                                <span className='bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs'>
-                                  {s.blanketCount} issued
-                                </span>
-                                <span className='text-xs text-gray-500 mt-1'>
-                                  {s.linenIssuedDate
-                                    ? `Last updated: ${new Date(
-                                        s.linenIssuedDate
-                                      ).toLocaleDateString()}`
-                                    : "None issued"}
-                                </span>
-                              </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className='flex justify-between mb-1'>
+                            <span className='font-bold'>{s.name}</span>
+                            {/* Removed rollNumber display */}
+                          </div>
+                          <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                            <span className='font-semibold'>Email:</span>
+                            <span>{s.email}</span>
+                            <span className='font-semibold'>Designation:</span>
+                            <span>{s.designation || "-"}</span>
+                            <span className='font-semibold'>Guardian:</span>
+                            <span>{s.guardianName || "-"}</span>
+                            <span className='font-semibold'>Mobile:</span>
+                            <span>{s.mobile || "-"}</span>
+                            <span className='font-semibold'>
+                              Ticket Number:
+                            </span>
+                            <span>{s.ticketNumber || "-"}</span>
+                            <span className='font-semibold'>Division:</span>
+                            <span>{s.division || "-"}</span>
+                            <span className='font-semibold'>Course:</span>
+                            <span>{s.course || "-"}</span>
+                            <span className='font-semibold'>Room No.:</span>
+                            <span>{s.roomNumber || "-"}</span>
+                            <span className='font-semibold'>
+                              Linen Inventory:
+                            </span>
+                            <div>
+                              <div>Bedsheets: {s.bedsheetCount} issued</div>
+                              <div>Pillows: {s.pillowCount} issued</div>
+                              <div>Blankets: {s.blanketCount} issued</div>
                             </div>
                           </div>
-                        </td>
-                        <td className='p-2 space-x-2'>
-                          <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                          <div className='flex gap-2 mt-2'>
                             <button
-                              className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold mr-2'
+                              className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
                               onClick={() => handleEditClick(s)}
                               type='button'
                             >
@@ -1278,236 +1586,21 @@ export default function AdminStudents() {
                               Delete
                             </button>
                           </div>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-                {students.length === 0 && (
-                  <tr>
-                    <td className='p-4 text-center' colSpan={11}>
-                      No students found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            {/* Card layout for mobile and small screens */}
-            <div className='md:hidden flex flex-col gap-4'>
-              {students.map((s) => (
-                <div
-                  key={s.id}
-                  className='bg-blue-50 rounded-lg shadow p-3 text-xs'
-                >
-                  {editId === s.id ? (
-                    <>
-                      <div className='flex justify-between mb-1'>
-                        <input
-                          type='text'
-                          name='name'
-                          value={editForm.name}
-                          onChange={handleEditFormChange}
-                          className='font-bold p-1 border rounded w-full'
-                        />
-                      </div>
-                      <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
-                        <span className='font-semibold'>Email:</span>
-                        <input
-                          type='email'
-                          name='email'
-                          value={editForm.email}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Designation:</span>
-                        <input
-                          type='text'
-                          name='designation'
-                          value={editForm.designation}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Guardian Name:</span>
-                        <input
-                          type='text'
-                          name='guardianName'
-                          value={editForm.guardianName}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Mobile:</span>
-                        <input
-                          type='text'
-                          name='mobile'
-                          value={editForm.mobile}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Ticket Number:</span>
-                        <input
-                          type='text'
-                          name='ticketNumber'
-                          value={editForm.ticketNumber}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Division:</span>
-                        <input
-                          type='text'
-                          name='division'
-                          value={editForm.division}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Course:</span>
-                        <input
-                          type='text'
-                          name='course'
-                          value={editForm.course}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Room No.:</span>
-                        <input
-                          type='text'
-                          name='roomNumber'
-                          value={editForm.roomNumber}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        />
-                        <span className='font-semibold'>Gender:</span>
-                        <select
-                          name='gender'
-                          value={editForm.gender}
-                          onChange={handleEditFormChange}
-                          className='p-1 border rounded w-full'
-                        >
-                          <option value='MALE'>Male</option>
-                          <option value='FEMALE'>Female</option>
-                          <option value='OTHER'>Other</option>
-                        </select>
-                        <span className='font-semibold'>Linen Inventory:</span>
-                        <div className='space-y-2'>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              Bedsheets
-                            </label>
-                            <input
-                              type='number'
-                              name='bedsheetCount'
-                              min='0'
-                              max='5'
-                              value={editForm.bedsheetCount}
-                              onChange={handleEditFormChange}
-                              className='p-1 border rounded w-full'
-                            />
-                          </div>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              Pillows
-                            </label>
-                            <input
-                              type='number'
-                              name='pillowCount'
-                              min='0'
-                              max='5'
-                              value={editForm.pillowCount}
-                              onChange={handleEditFormChange}
-                              className='p-1 border rounded w-full'
-                            />
-                          </div>
-                          <div>
-                            <label className='block text-sm font-medium text-gray-700 mb-1'>
-                              Blankets
-                            </label>
-                            <input
-                              type='number'
-                              name='blanketCount'
-                              min='0'
-                              max='2'
-                              value={editForm.blanketCount}
-                              onChange={handleEditFormChange}
-                              className='p-1 border rounded w-full'
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className='flex gap-2 mt-2'>
-                        <button
-                          className='text-green-600 mr-2 border border-green-600 px-2 py-1 rounded'
-                          onClick={() => handleEditSave(s.id)}
-                          type='button'
-                        >
-                          Save
-                        </button>
-                        <button
-                          className='text-gray-600 border border-gray-400 px-2 py-1 rounded'
-                          onClick={handleEditCancel}
-                          type='button'
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className='flex justify-between mb-1'>
-                        <span className='font-bold'>{s.name}</span>
-                        {/* Removed rollNumber display */}
-                      </div>
-                      <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
-                        <span className='font-semibold'>Email:</span>
-                        <span>{s.email}</span>
-                        <span className='font-semibold'>Designation:</span>
-                        <span>{s.designation || "-"}</span>
-                        <span className='font-semibold'>Guardian:</span>
-                        <span>{s.guardianName || "-"}</span>
-                        <span className='font-semibold'>Mobile:</span>
-                        <span>{s.mobile || "-"}</span>
-                        <span className='font-semibold'>Ticket Number:</span>
-                        <span>{s.ticketNumber || "-"}</span>
-                        <span className='font-semibold'>Division:</span>
-                        <span>{s.division || "-"}</span>
-                        <span className='font-semibold'>Course:</span>
-                        <span>{s.course || "-"}</span>
-                        <span className='font-semibold'>Room No.:</span>
-                        <span>{s.roomNumber || "-"}</span>
-                        <span className='font-semibold'>Linen Inventory:</span>
-                        <div>
-                          <div>Bedsheets: {s.bedsheetCount} issued</div>
-                          <div>Pillows: {s.pillowCount} issued</div>
-                          <div>Blankets: {s.blanketCount} issued</div>
-                        </div>
-                      </div>
-                      <div className='flex gap-2 mt-2'>
-                        <button
-                          className='bg-gradient-to-r from-blue-500 to-blue-700 text-white px-3 py-1 rounded shadow hover:from-blue-600 hover:to-blue-800 transition font-semibold'
-                          onClick={() => handleEditClick(s)}
-                          type='button'
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold'
-                          onClick={() => handleDeleteClick(s.id)}
-                          type='button'
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {students.length === 0 && (
+                    <div className='p-4 text-center'>No students found</div>
                   )}
-                </div>
-              ))}
-              {students.length === 0 && (
-                <div className='p-4 text-center'>No students found</div>
+                </>
               )}
             </div>
           </>
         ) : (
           <>
             {/* Archived Students Table for desktop and tablets */}
-            <table className='min-w-[900px] w-full border-separate border-spacing-y-2 text-left text-xs md:text-sm hidden md:table'>
+            <table className='min-w-[900px] w-full border-separate border-spacing-y-2 text-center text-xs md:text-sm hidden md:table'>
               <thead className='bg-red-50'>
                 <tr>
                   <th className='p-2 border-b'>Name</th>
@@ -1527,103 +1620,143 @@ export default function AdminStudents() {
                 </tr>
               </thead>
               <tbody>
-                {archivedStudents.map((s) => (
-                  <tr
-                    key={s.id}
-                    className='hover:bg-red-50 rounded-lg transition'
-                  >
-                    <td className='p-2'>{s.name}</td>
-                    <td
-                      className='p-2 w-48 min-w-[10rem] max-w-[16rem] truncate'
-                      title={s.email}
-                    >
-                      {s.email}
-                    </td>
-                    <td className='p-2'>{s.designation || "-"}</td>
-                    <td className='p-2'>{s.guardianName || "-"}</td>
-                    <td className='p-2'>{s.mobile || "-"}</td>
-                    <td className='p-2'>{s.ticketNumber || "-"}</td>
-                    <td className='p-2'>{s.division || "-"}</td>
-                    <td className='p-2'>{s.course || "-"}</td>
-                    <td className='p-2'>{s.roomNumber || "-"}</td>
-                    <td className='p-2'>
-                      {new Date(s.deletedAt).toLocaleDateString()}
-                    </td>
-                    <td className='p-2'>{s.deletedBy || "-"}</td>
-                    <td className='p-2 space-x-2'>
-                      <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
-                        <button
-                          className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold text-xs'
-                          onClick={() => handleDeleteClick(s.id)}
-                          type='button'
-                          title='Permanently delete this record'
-                        >
-                          Permanent Delete
-                        </button>
+                {tableLoading ? (
+                  <tr>
+                    <td colSpan={12} className='p-8 text-center'>
+                      <div className='flex items-center justify-center space-x-2'>
+                        <div className='animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent'></div>
+                        <span className='text-gray-600'>
+                          Loading archived student data...
+                        </span>
                       </div>
                     </td>
                   </tr>
-                ))}
-                {archivedStudents.length === 0 && (
-                  <tr>
-                    <td className='p-4 text-center' colSpan={12}>
-                      No archived students found
-                    </td>
-                  </tr>
+                ) : (
+                  <>
+                    {archivedStudents.map((s) => (
+                      <tr
+                        key={s.id}
+                        className='hover:bg-red-50 rounded-lg transition'
+                      >
+                        <td className='p-2 text-center'>{s.name}</td>
+                        <td
+                          className='p-2 w-48 min-w-[10rem] max-w-[16rem] truncate text-center'
+                          title={s.email}
+                        >
+                          {s.email}
+                        </td>
+                        <td className='p-2 text-center'>
+                          {s.designation || "-"}
+                        </td>
+                        <td className='p-2 text-center'>
+                          {s.guardianName || "-"}
+                        </td>
+                        <td className='p-2 text-center'>{s.mobile || "-"}</td>
+                        <td className='p-2 text-center'>
+                          {s.ticketNumber || "-"}
+                        </td>
+                        <td className='p-2 text-center'>{s.division || "-"}</td>
+                        <td className='p-2 text-center'>{s.course || "-"}</td>
+                        <td className='p-2 text-center'>
+                          {s.roomNumber || "-"}
+                        </td>
+                        <td className='p-2 text-center'>
+                          {new Date(s.deletedAt).toLocaleDateString()}
+                        </td>
+                        <td className='p-2 text-center'>
+                          {s.deletedBy || "-"}
+                        </td>
+                        <td className='p-2 space-x-2 text-center'>
+                          <div className='flex flex-col sm:flex-row gap-2 justify-center items-center'>
+                            <button
+                              className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold text-xs'
+                              onClick={() => handleDeleteClick(s.id)}
+                              type='button'
+                              title='Permanently delete this record'
+                            >
+                              Permanent Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {archivedStudents.length === 0 && (
+                      <tr>
+                        <td className='p-4 text-center' colSpan={12}>
+                          No archived students found
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
               </tbody>
             </table>
 
             {/* Card layout for mobile and small screens - Archived Students */}
             <div className='md:hidden flex flex-col gap-4'>
-              {archivedStudents.map((s) => (
-                <div
-                  key={s.id}
-                  className='bg-red-50 rounded-lg shadow p-3 text-xs'
-                >
-                  <div className='flex justify-between mb-1'>
-                    <span className='font-bold'>{s.name}</span>
-                    <span className='text-red-600 text-xs font-semibold'>
-                      ARCHIVED
+              {tableLoading ? (
+                <div className='p-8 text-center'>
+                  <div className='flex items-center justify-center space-x-2'>
+                    <div className='animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent'></div>
+                    <span className='text-gray-600'>
+                      Loading archived student data...
                     </span>
                   </div>
-                  <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
-                    <span className='font-semibold'>Email:</span>
-                    <span>{s.email}</span>
-                    <span className='font-semibold'>Designation:</span>
-                    <span>{s.designation || "-"}</span>
-                    <span className='font-semibold'>Guardian:</span>
-                    <span>{s.guardianName || "-"}</span>
-                    <span className='font-semibold'>Mobile:</span>
-                    <span>{s.mobile || "-"}</span>
-                    <span className='font-semibold'>Ticket Number:</span>
-                    <span>{s.ticketNumber || "-"}</span>
-                    <span className='font-semibold'>Division:</span>
-                    <span>{s.division || "-"}</span>
-                    <span className='font-semibold'>Course:</span>
-                    <span>{s.course || "-"}</span>
-                    <span className='font-semibold'>Room:</span>
-                    <span>{s.roomNumber || "-"}</span>
-                    <span className='font-semibold'>Archived Date:</span>
-                    <span>{new Date(s.deletedAt).toLocaleDateString()}</span>
-                    <span className='font-semibold'>Archived By:</span>
-                    <span>{s.deletedBy || "-"}</span>
-                  </div>
-                  <div className='flex gap-2 mt-2'>
-                    <button
-                      className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold text-xs'
-                      onClick={() => handleDeleteClick(s.id)}
-                      type='button'
+                </div>
+              ) : (
+                <>
+                  {archivedStudents.map((s) => (
+                    <div
+                      key={s.id}
+                      className='bg-red-50 rounded-lg shadow p-3 text-xs'
                     >
-                      Permanent Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {archivedStudents.length === 0 && (
-                <div className='p-4 text-center'>
-                  No archived students found
-                </div>
+                      <div className='flex justify-between mb-1'>
+                        <span className='font-bold'>{s.name}</span>
+                        <span className='text-red-600 text-xs font-semibold'>
+                          ARCHIVED
+                        </span>
+                      </div>
+                      <div className='grid grid-cols-2 gap-x-2 gap-y-1'>
+                        <span className='font-semibold'>Email:</span>
+                        <span>{s.email}</span>
+                        <span className='font-semibold'>Designation:</span>
+                        <span>{s.designation || "-"}</span>
+                        <span className='font-semibold'>Guardian:</span>
+                        <span>{s.guardianName || "-"}</span>
+                        <span className='font-semibold'>Mobile:</span>
+                        <span>{s.mobile || "-"}</span>
+                        <span className='font-semibold'>Ticket Number:</span>
+                        <span>{s.ticketNumber || "-"}</span>
+                        <span className='font-semibold'>Division:</span>
+                        <span>{s.division || "-"}</span>
+                        <span className='font-semibold'>Course:</span>
+                        <span>{s.course || "-"}</span>
+                        <span className='font-semibold'>Room:</span>
+                        <span>{s.roomNumber || "-"}</span>
+                        <span className='font-semibold'>Archived Date:</span>
+                        <span>
+                          {new Date(s.deletedAt).toLocaleDateString()}
+                        </span>
+                        <span className='font-semibold'>Archived By:</span>
+                        <span>{s.deletedBy || "-"}</span>
+                      </div>
+                      <div className='flex gap-2 mt-2'>
+                        <button
+                          className='bg-gradient-to-r from-red-500 to-red-700 text-white px-3 py-1 rounded shadow hover:from-red-600 hover:to-red-800 transition font-semibold text-xs'
+                          onClick={() => handleDeleteClick(s.id)}
+                          type='button'
+                        >
+                          Permanent Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {archivedStudents.length === 0 && (
+                    <div className='p-4 text-center'>
+                      No archived students found
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </>
@@ -1726,11 +1859,12 @@ export default function AdminStudents() {
       <div className='flex flex-col sm:flex-row justify-between items-center mt-6 gap-4'>
         <button
           disabled={activeTab === "current" ? page === 1 : archivedPage === 1}
-          onClick={() =>
+          onClick={() => {
+            setTableLoading(true);
             activeTab === "current"
               ? setPage((p) => p - 1)
-              : setArchivedPage((p) => p - 1)
-          }
+              : setArchivedPage((p) => p - 1);
+          }}
           className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
         >
           Previous
@@ -1745,11 +1879,12 @@ export default function AdminStudents() {
               ? page === totalPages
               : archivedPage === archivedTotalPages
           }
-          onClick={() =>
+          onClick={() => {
+            setTableLoading(true);
             activeTab === "current"
               ? setPage((p) => p + 1)
-              : setArchivedPage((p) => p + 1)
-          }
+              : setArchivedPage((p) => p + 1);
+          }}
           className='px-4 py-2 border rounded disabled:opacity-50 bg-white shadow-sm w-full sm:w-auto'
         >
           Next
